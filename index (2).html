@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TouchPOI | Demo sul territorio pilota MaMa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brown:#8A4B2A; --green:#4E9A3A; --blue:#2A93C9; --yellow:#C3A93A; --khaki:#9E8C3A; --khaki-2:#B8A95E;
+  --orange:#E97E00; --tp:#0E3B43; --tp-2:#15525C;
+  --bg:#FFFFFF; --surface:#FFFFFF; --soft:#F5F3EE; --text:#333333; --ink:#434343; --muted:#6A6660; --line:#E4E0D8; --foot:#2F2F2F;
+  --sans:"Montserrat","Segoe UI",system-ui,-apple-system,sans-serif;
+  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#141515;--surface:#1C1E1E;--soft:#232625;--text:#ECE9E4;--ink:#F1EEE9;--muted:#B5AFA7;--line:#343736;--foot:#0E0F0F}
+}
+:root[data-theme="dark"]{--bg:#141515;--surface:#1C1E1E;--soft:#232625;--text:#ECE9E4;--ink:#F1EEE9;--muted:#B5AFA7;--line:#343736;--foot:#0E0F0F}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 130px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.6;font-weight:400}
+img,svg{max-width:100%}
+a{color:inherit}
+button{font:inherit;cursor:pointer;color:inherit}
+h1,h2,h3{color:var(--ink);font-weight:600;line-height:1.2}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Striscia prodotto TouchPOI */
+.tpbar{background:var(--tp);color:#fff;font-size:13px}
+.tpbar .wrap{display:flex;align-items:center;gap:16px;min-height:44px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
+.tplogo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;letter-spacing:.2px}
+.tplogo i{width:22px;height:22px;border-radius:6px;background:#fff;display:grid;place-items:center}
+.tpbar .claim{opacity:.85}
+.tpbar .right{margin-left:auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.tpbar label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.tpbar input{accent-color:var(--orange);width:15px;height:15px}
+@media (max-width:700px){.tpbar .claim{display:none}.tpbar .right{margin-left:0}}
+.tpbar a{color:#fff;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:4px 12px}
+
+/* Header portale */
+header.site{position:sticky;top:0;z-index:40;background:var(--surface);border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:24px;padding-top:12px;padding-bottom:12px}
+.mama{font-family:var(--sans);font-weight:700;font-size:34px;line-height:.9;text-decoration:none;letter-spacing:-1px;display:flex;flex-direction:column}
+.mama span:nth-child(1){color:var(--brown)} .mama span:nth-child(2){color:var(--green)} .mama span:nth-child(3){color:var(--blue)} .mama span:nth-child(4){color:var(--yellow)}
+.mama small{font-size:9.5px;letter-spacing:1.4px;color:var(--muted);font-weight:500;margin-top:4px;font-family:var(--serif)}
+nav.menu{display:flex;flex-wrap:wrap;gap:4px 22px;margin-left:auto;font-size:13.5px;text-transform:uppercase;letter-spacing:.3px}
+nav.menu a{text-decoration:none;padding:6px 0;border-bottom:2px solid transparent;color:var(--ink)}
+nav.menu a.on{border-color:var(--green)}
+.hbtns{display:flex;gap:8px;align-items:center}
+.pill{white-space:nowrap;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:999px;font-weight:600;font-size:13px}
+.count{background:var(--brown);color:#fff;border-radius:999px;min-width:21px;height:21px;display:grid;place-items:center;font-size:11px;padding:0 6px}
+.burger{display:none}
+@media (max-width:1020px){
+  nav.menu{display:none;position:absolute;left:0;right:0;top:100%;background:var(--surface);flex-direction:column;padding:10px 20px 18px;border-bottom:1px solid var(--line);margin:0}
+  nav.menu.open{display:flex}
+  .burger{display:flex}
+  .hbtns{margin-left:auto}
+}
+
+/* Etichette moduli */
+.mod{display:none;font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px;margin:6px 0;width:max-content;max-width:100%;line-height:1.4;font-family:var(--sans);text-transform:none;letter-spacing:0}
+.mod.b{background:#DCEBED;color:#0E3B43}
+.mod.a{background:#FBE3CC;color:#8A3E00}
+body.show-mod .mod{display:inline-block}
+
+/* Componenti */
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:6px;padding:11px 18px;font-weight:600;font-size:14px;border:0;background:var(--khaki);color:#fff;text-decoration:none}
+.btn:hover{background:#8A7A30}
+.btn.dark{background:var(--ink);color:var(--bg)}
+.btn.line{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.green{background:var(--green)}
+.btn.tp{background:var(--tp)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.sec{padding:56px 0}
+.sec.soft{background:var(--soft)}
+.stitle{font-size:clamp(26px,3.4vw,38px);margin:0 0 6px}
+.stitle em{font-style:normal}
+.lead{color:var(--muted);max-width:62ch;margin:0 0 24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px}
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:4px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,.06);transition:box-shadow .2s}
+.card:hover{box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.card.hl{box-shadow:0 0 0 3px var(--green)}
+.thumb{position:relative;aspect-ratio:16/11;display:block;overflow:hidden}
+.thumb svg{display:block;width:100%;height:100%}
+.heart{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.94);display:grid;place-items:center}
+.heart svg{width:19px;height:19px}
+.heart[aria-pressed="true"] path{fill:var(--brown);stroke:var(--brown)}
+.tag{position:absolute;left:10px;top:10px;background:rgba(255,255,255,.94);color:#333;font-size:11px;font-weight:700;border-radius:4px;padding:3px 8px}
+.price{position:absolute;left:10px;bottom:10px;background:rgba(47,47,47,.88);color:#fff;font-size:12px;font-weight:600;border-radius:4px;padding:4px 8px}
+.cbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px;flex:1;text-align:center}
+.cbody h3{font-size:17px;margin:0;font-weight:500}
+.where{font-size:13px;color:var(--muted);display:flex;gap:6px;justify-content:center;align-items:center}
+.where::before{content:"";width:9px;height:12px;background:var(--yellow);clip-path:path("M4.5 0C2 0 0 2 0 4.5 0 8 4.5 12 4.5 12S9 8 9 4.5C9 2 7 0 4.5 0z")}
+.meta{font-size:12.5px;color:var(--muted)}
+.cact{margin-top:auto;padding-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
+.empty{padding:28px;text-align:center;border:1px dashed var(--line);border-radius:6px;color:var(--muted)}
+select,input,textarea{font:inherit;font-size:14px;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 12px;width:100%}
+label.f{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:22px}
+.filters>div{min-width:180px;flex:1}
+
+/* Hero home */
+.hero{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:18px 20px 0;max-width:1240px;margin:0 auto}
+.hpanel{position:relative;border-radius:2px;overflow:hidden;min-height:clamp(260px,40vw,470px)}
+.hpanel:first-child{clip-path:polygon(0 0,100% 4%,100% 96%,0 100%)}
+.hpanel:last-child{clip-path:polygon(0 4%,100% 0,100% 100%,0 96%)}
+.hpanel svg{position:absolute;inset:0;width:100%;height:100%}
+.hpanel b{position:absolute;left:22px;bottom:30px;color:#fff;font-size:15px;font-weight:600;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.intro{max-width:1240px;margin:0 auto;padding:36px 20px 10px;display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:start}
+.intro h1{font-size:clamp(30px,4.2vw,46px);margin:0 0 14px}
+.intro p{margin:0 0 12px;font-weight:300;font-size:17px}
+.search{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;box-shadow:0 18px 40px -30px rgba(0,0,0,.4)}
+.search h2{font-size:18px;margin:0 0 12px}
+.sgrid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px}
+.wx{display:flex;gap:6px;margin-top:12px;overflow-x:auto}
+.wd{flex:0 0 auto;background:var(--soft);border-radius:6px;padding:6px 10px;text-align:center;font-size:12px;min-width:62px}
+.wd b{display:block;font-size:15px}
+@media (max-width:900px){.hero{grid-template-columns:1fr}.hpanel:last-child{display:none}.intro{grid-template-columns:1fr}.sgrid{grid-template-columns:1fr 1fr}}
+
+/* Categorie tematiche */
+.themes{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.theme{position:relative;border-radius:4px;overflow:hidden;aspect-ratio:4/5;text-decoration:none;color:#fff;display:block}
+.theme svg{position:absolute;inset:0;width:100%;height:100%}
+.theme div{position:absolute;left:0;right:0;bottom:0;padding:18px;background:linear-gradient(transparent,rgba(0,0,0,.6))}
+.theme h3{color:#fff;font-size:20px;margin:0}
+.theme p{margin:4px 0 0;font-size:13px;opacity:.9}
+@media (max-width:900px){.themes{grid-template-columns:repeat(2,1fr)}}
+
+/* Spotlight */
+.spot{background:var(--brown);color:#fff;border-radius:6px;display:flex;align-items:center;gap:20px;padding:18px 22px;flex-wrap:wrap}
+.spot h3{color:#fff;font-size:20px;margin:0}
+.spot p{margin:2px 0 0;font-size:14px;opacity:.92}
+.cd{display:flex;gap:8px;margin-left:auto}
+.cd div{background:rgba(255,255,255,.16);border-radius:6px;padding:6px 10px;text-align:center;min-width:56px}
+.cd b{display:block;font-size:20px}
+.cd span{font-size:11px}
+.spot .btn{background:#fff;color:var(--brown)}
+
+/* Ricetta */
+.recipe{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center}
+.recipe .ill{border-radius:4px;overflow:hidden;aspect-ratio:16/11;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.recipe h2{font-family:var(--serif);font-style:italic;font-weight:500}
+@media (max-width:800px){.recipe{grid-template-columns:1fr}}
+
+/* Comuni */
+.comuni{columns:4 180px;column-gap:24px;font-size:13px;letter-spacing:.3px;text-transform:uppercase}
+.comuni button{display:block;background:none;border:0;padding:5px 0;text-align:left;width:100%}
+.comuni button:hover{color:var(--green)}
+.comuni button.rb::after{content:" ●";color:var(--blue);font-size:9px;vertical-align:middle}
+
+/* Mappa */
+.maplay{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px;align-items:start}
+.mapbox{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden;position:sticky;top:120px}
+.maphead{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap}
+.maphead b{font-size:15px}
+.legend{display:flex;gap:10px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.map{display:block;width:100%;height:auto}
+.pin{cursor:pointer}
+.pin circle{stroke:#fff;stroke-width:2;transition:r .15s}
+.pin.on circle{r:10}
+.pin:focus-visible{outline:none}
+.pin:focus-visible circle{stroke:var(--orange);stroke-width:3.5}
+.mapnote{font-size:12px;color:var(--muted);padding:8px 14px}
+@media (max-width:1000px){.maplay{grid-template-columns:1fr}.mapbox{position:static;order:-1}}
+
+/* Scheda dettaglio */
+.detail{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:36px;align-items:start}
+.gallery{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:8px;aspect-ratio:16/8;margin-bottom:24px}
+.gallery>div{border-radius:4px;overflow:hidden}
+.gallery>div:first-child{grid-row:span 2}
+.gallery svg{width:100%;height:100%;display:block}
+.dside{position:sticky;top:120px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px}
+.facts{display:grid;gap:10px;margin:14px 0;font-size:14px}
+.facts div{display:flex;gap:10px}
+.facts span:first-child{color:var(--muted);min-width:92px}
+.crumbs{font-size:13px;color:var(--muted);margin:18px 0 8px}
+.crumbs a{text-decoration:none}
+.dnote{background:var(--soft);border-left:4px solid var(--yellow);padding:12px 16px;border-radius:0 6px 6px 0;font-size:14px;margin:18px 0}
+@media (max-width:900px){.detail{grid-template-columns:1fr}.dside{position:static}}
+
+/* Panorama */
+.pano{border-radius:6px;overflow:hidden;border:1px solid var(--line);cursor:grab;touch-action:pan-y;user-select:none;position:relative}
+.pano:active{cursor:grabbing}
+.pano svg{display:block;width:220%;height:auto;max-width:none}
+.pano .hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(47,47,47,.85);color:#fff;font-size:13px;border-radius:999px;padding:6px 14px;pointer-events:none}
+
+/* Download */
+.dls{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.dls a{background:var(--khaki-2);color:#fff;text-decoration:none;border-radius:8px;padding:18px;font-weight:600;font-size:18px;text-align:center}
+@media (max-width:700px){.dls{grid-template-columns:1fr}}
+
+/* Footer */
+footer{background:var(--foot);color:#ddd;padding:40px 0 24px;font-size:14px}
+.fgrid{display:grid;grid-template-columns:1.4fr 1fr 1.2fr;gap:28px}
+footer h4{color:#fff;font-size:18px;margin:0 0 10px}
+footer a{display:block;text-decoration:none;opacity:.88;margin:4px 0}
+.nl input{background:#fff;color:#333;margin-bottom:8px}
+.nl .btn{background:var(--orange);width:100%;justify-content:center}
+.fbot{border-top:1px solid #444;margin-top:24px;padding-top:14px;font-size:12.5px;opacity:.8;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+@media (max-width:800px){.fgrid{grid-template-columns:1fr}}
+
+/* Drawer viaggio */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);z-index:70;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer.open{transform:none}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dh h2{font-size:20px;margin:0}
+.x{background:none;border:0;font-size:26px;line-height:1;padding:4px 8px}
+.db{padding:16px 20px;overflow-y:auto;flex:1}
+.df{border-top:1px solid var(--line);padding:14px 20px;display:grid;gap:8px}
+.day h3{font-size:15px;margin:14px 0 8px;color:var(--green)}
+.stop{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:6px;margin-bottom:8px}
+.stop i{width:12px;height:12px;border-radius:50%;flex:0 0 auto}
+.stop b{display:block;font-size:14px;font-weight:600}
+.stop small{color:var(--muted);font-size:12px}
+.stop button{margin-left:auto;background:none;border:0;color:var(--muted);font-size:18px}
+.tot{display:flex;justify-content:space-between;font-weight:700}
+.aibox{background:var(--soft);border-radius:6px;padding:12px;font-size:14px;white-space:pre-wrap;margin-top:8px}
+
+/* Dialog */
+dialog{border:0;border-radius:8px;padding:0;width:min(540px,94vw);background:var(--surface);color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.mh{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.mh h2{font-size:19px;margin:0}
+.mb{padding:18px 20px;display:grid;gap:14px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal button{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:7px 0;font-size:13px;line-height:1.2}
+.cal button small{display:block;font-size:10px;color:var(--muted)}
+.cal button[disabled]{opacity:.35;cursor:not-allowed;text-decoration:line-through}
+.cal button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
+.cal button[aria-pressed="true"] small{color:#eaffea}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ok{background:#E6F2E1;color:#28561C;border-radius:6px;padding:12px;font-size:14px}
+.err{background:#F8E3DC;color:#7A2E12;border-radius:6px;padding:12px;font-size:14px}
+
+/* Chat */
+.fab{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--green);color:#fff;border:0;border-radius:999px;padding:13px 20px;font-weight:600;display:flex;gap:10px;align-items:center;box-shadow:0 12px 30px -10px rgba(78,154,58,.7)}
+.chat{position:fixed;right:20px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:55;width:min(380px,calc(100vw - 40px));height:min(540px,70vh);background:var(--surface);border:1px solid var(--line);border-radius:10px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 30px 60px -30px rgba(0,0,0,.5)}
+.chat.open{display:flex}
+.chh{background:var(--green);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.chh b{font-size:17px}
+.chh small{display:block;opacity:.85;font-size:12px}
+.chh .x{color:#fff}
+.msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:86%;padding:10px 12px;border-radius:12px;font-size:14px;white-space:pre-wrap}
+.msg.bot{background:var(--soft);align-self:flex-start;border-bottom-left-radius:3px}
+.msg.me{background:var(--green);color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
+.sugg{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 8px}
+.sugg button{border:1px solid var(--line);background:transparent;border-radius:999px;font-size:12px;padding:5px 10px}
+.cform{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.cform input{border-radius:999px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:#2F2F2F;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:.2s;z-index:90;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+/* Area operatori e Ente */
+.op{display:grid;grid-template-columns:240px minmax(0,1fr);gap:24px;align-items:start}
+.opnav{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px;position:sticky;top:120px}
+.opnav button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:6px;font-size:14px;font-weight:500}
+.opnav button[aria-current="true"]{background:var(--soft);color:var(--tp);font-weight:700}
+.opnav .who{padding:10px 12px 12px;border-bottom:1px solid var(--line);margin-bottom:6px;font-size:13px}
+.opnav .who b{display:block;font-size:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:22px}
+.panel h2{font-size:22px;margin:0 0 4px}
+.panel>p.sub{color:var(--muted);margin:0 0 18px;font-size:14px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:var(--soft);border-radius:6px;padding:14px}
+.kpi b{display:block;font-size:26px;color:var(--ink)}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.kpi em{font-style:normal;font-size:12px;color:var(--green);font-weight:700}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:140px 1fr 60px;gap:10px;align-items:center;font-size:13px}
+.bar div{height:12px;border-radius:6px;background:var(--soft);overflow:hidden}
+.bar div i{display:block;height:100%;background:var(--blue);border-radius:6px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;color:var(--muted);font-weight:600}
+.st{font-size:11.5px;font-weight:700;border-radius:4px;padding:2px 8px;display:inline-block}
+.st.pub{background:#E6F2E1;color:#28561C}.st.rev{background:#FFF1D6;color:#7A5200}.st.new{background:#DCEBF7;color:#12507A}.st.no{background:#F3E1DE;color:#7A2E12}
+.steps{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.steps span{font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.steps span.on{background:var(--tp);color:#fff}
+.steps span.done{background:#DCEBED;color:var(--tp)}
+.wz{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px;align-items:start}
+.fgrid2{display:grid;gap:12px}
+.prev{position:sticky;top:120px}
+.prev .pl{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.avail{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.avail button{border:1px solid var(--line);border-radius:6px;padding:8px 0;font-size:12.5px;background:#E6F2E1;color:#28561C}
+.avail button.off{background:#F3E1DE;color:#7A2E12;text-decoration:line-through}
+.video{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:6px;margin-bottom:10px}
+.video i{width:64px;height:44px;border-radius:4px;background:var(--tp);display:grid;place-items:center;color:#fff;font-style:normal;flex:0 0 auto}
+.login{max-width:440px;margin:30px auto}
+@media (max-width:900px){.op{grid-template-columns:1fr}.opnav{position:static;display:flex;overflow-x:auto;gap:4px}.opnav .who{display:none}.opnav button{white-space:nowrap;width:auto}.kpis{grid-template-columns:1fr 1fr}.wz{grid-template-columns:1fr}.prev{position:static}.bar{grid-template-columns:100px 1fr 50px}}
+.pgtitle{padding:34px 0 8px}
+.pgtitle h1{font-size:clamp(30px,4vw,44px);margin:0 0 8px}
+.band{position:relative;height:clamp(160px,22vw,260px);overflow:hidden}
+.band svg{position:absolute;inset:0;width:100%;height:100%}
+.band h1{position:absolute;inset:0;display:grid;place-items:center;color:#fff;margin:0;font-size:clamp(30px,4.5vw,50px);text-shadow:0 2px 14px rgba(0,0,0,.45);text-align:center;padding:0 20px}
+</style>
+</head>
+<body>
+
+<div class="tpbar" role="banner">
+  <div class="wrap">
+    <span class="tplogo"><i aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0E3B43" stroke-width="2.6"><circle cx="12" cy="10" r="3"/><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/></svg></i>TouchPOI</span>
+    <span class="claim">L'ecosistema digitale per il turismo. Demo sul territorio pilota MaMa, Marca Maceratese</span>
+    <div class="right">
+      <label><input type="checkbox" id="modToggle"> Mostra i moduli</label>
+      <a href="#/operatori">Area operatori</a>
+      <a href="#/ente">Vista Ente</a>
+    </div>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap hrow">
+    <a class="mama" href="#/" aria-label="MaMa, Marca Maceratese, home"><div><span>M</span><span>a</span><span>M</span><span>a</span></div><small>MARCA MACERATESE</small></a>
+    <nav class="menu" id="menu" aria-label="Principale">
+      <a href="#/tema/arte">Arte e cultura</a>
+      <a href="#/tema/natura">Sport e natura</a>
+      <a href="#/tema/spirito">Spiritualità</a>
+      <a href="#/gusto">Gusto</a>
+      <a href="#/esperienze">Esperienze</a>
+      <a href="#/eventi">Eventi</a>
+      <a href="#/dormire">Dove dormire</a>
+      <a href="#/mangiare">Dove mangiare</a>
+      <a href="#/territorio">Il territorio</a>
+    </nav>
+    <div class="hbtns">
+      <button class="pill" id="openTrip" aria-haspopup="dialog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-4.4-9.3-9A5.2 5.2 0 0 1 12 6a5.2 5.2 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z"/></svg>Il mio viaggio <span class="count" id="favCount">0</span></button>
+      <button class="pill burger" id="burger" aria-expanded="false" aria-controls="menu" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<main id="app" tabindex="-1"></main>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <h4>MaMa, Marca Maceratese</h4>
+        <p>La rete dei Comuni della Marca Maceratese. Portale realizzato con TouchPOI, l'ecosistema digitale per il turismo di Maggioli Cultura e Turismo.</p>
+        <span class="mod b">Modulo base: Blog e pagine istituzionali</span>
+      </div>
+      <div>
+        <h4>Menu</h4>
+        <a href="#/territorio">Il territorio</a><a href="#/servizi">Servizi al turista</a><a href="#/come-arrivare">Come arrivare</a><a href="#/operatori">Area operatori</a><a href="#/api">Interoperabilità e API</a><a href="#/">Dichiarazione di accessibilità</a>
+      </div>
+      <div class="nl">
+        <h4>Newsletter</h4>
+        <p style="margin-top:0">Resta aggiornato sulle novità di MaMa.</p>
+        <label class="sr" for="nlName">Nome</label><input id="nlName" placeholder="Nome">
+        <label class="sr" for="nlMail">Email</label><input id="nlMail" type="email" placeholder="Email">
+        <button class="btn" id="nlBtn">Iscriviti alla newsletter</button>
+      </div>
+    </div>
+    <div class="fbot"><span>Demo TouchPOI, contenuti tratti dal portale turistico MaMa e rielaborati. Prezzi, disponibilità e numeri sono illustrativi.</span><span>Maggioli Cultura e Turismo</span></div>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" aria-hidden="true">
+  <div class="dh"><h2 id="dTitle">Il mio viaggio</h2><button class="x" id="closeTrip" aria-label="Chiudi">×</button></div>
+  <div class="db" id="tripBody"></div>
+  <div class="df">
+    <span class="mod b">Modulo base: Filtri, wishlist e ricerca</span>
+    <div class="tot"><span>Spesa stimata</span><span id="tripTot">0 €</span></div>
+    <button class="btn green" id="shareTrip">Copia il link del viaggio</button>
+    <button class="btn tp" id="aiTrip">Organizzami il programma</button>
+    <span class="mod a">Modulo avanzato: AI ottimizzante</span>
+  </div>
+</aside>
+
+<dialog id="book" aria-labelledby="bTitle">
+  <div class="mh"><h2 id="bTitle">Richiedi prenotazione</h2><button class="x" id="closeBook" aria-label="Chiudi">×</button></div>
+  <div class="mb" id="bookBody"></div>
+</dialog>
+
+<button class="fab" id="fab" aria-expanded="false" aria-controls="chat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Chiedi a MaMa</button>
+<section class="chat" id="chat" aria-label="Assistente di MaMa">
+  <div class="chh"><div><b>Assistente MaMa</b><small>Attivo 24 ore su 24</small></div><button class="x" id="closeChat" aria-label="Chiudi">×</button></div>
+  <div class="msgs" id="msgs" aria-live="polite"></div>
+  <div class="sugg" id="sugg"></div>
+  <form class="cform" id="cform"><label class="sr" for="cin">Scrivi all'assistente</label><input id="cin" placeholder="Chiedi un consiglio" autocomplete="off"><button class="btn green sm" type="submit">Invia</button></form>
+  <div style="padding:0 14px 10px"><span class="mod a">Modulo avanzato: Chatbot AI integrato</span></div>
+</section>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- Dati del territorio (rielaborati dal portale MaMa) ---------- */
+var COMUNI=["Apiro","Appignano","Belforte del Chienti","Bolognola","Caldarola","Camerino","Camporotondo di Fiastrone","Castelraimondo","Castelsantangelo sul Nera","Cessapalombo","Cingoli","Civitanova Marche","Colmurano","Corridonia","Esanatoglia","Fiastra","Fiuminata","Gagliole","Gualdo","Loro Piceno","Macerata","Matelica","Mogliano","Monte Cavallo","Monte San Giusto","Monte San Martino","Montecassiano","Montecosaro","Montefano","Montelupone","Morrovalle","Muccia","Penna San Giovanni","Petriolo","Pieve Torina","Pioraco","Poggio San Vicino","Pollenza","Porto Recanati","Potenza Picena","Recanati","Ripe San Ginesio","San Ginesio","San Severino Marche","Sant'Angelo in Pontano","Sarnano","Sefro","Serrapetrona","Serravalle di Chienti","Tolentino","Treia","Urbisaglia","Ussita","Valfornace","Visso"];
+var REBUILD=["Macerata","Belforte del Chienti","Bolognola","Caldarola","Camerino","Castelraimondo","Cessapalombo","Cingoli","Esanatoglia","Fiuminata","Gagliole","Loro Piceno","Matelica","Monte Cavallo","Monte San Martino","Pollenza","San Severino Marche","Sant'Angelo in Pontano","Sarnano","Serrapetrona","Tolentino","Treia","Urbisaglia"];
+var GEO={"Macerata":[43.30,13.45],"Civitanova Marche":[43.31,13.73],"Porto Recanati":[43.43,13.66],"Recanati":[43.40,13.55],"Potenza Picena":[43.37,13.62],"Montelupone":[43.34,13.57],"Cingoli":[43.37,13.22],"Appignano":[43.36,13.35],"Treia":[43.31,13.31],"Pollenza":[43.27,13.35],"Tolentino":[43.21,13.28],"San Severino Marche":[43.23,13.18],"Matelica":[43.26,13.01],"Castelraimondo":[43.21,13.05],"Camerino":[43.14,13.07],"Pioraco":[43.18,12.98],"Sefro":[43.15,12.95],"Serrapetrona":[43.18,13.19],"Caldarola":[43.14,13.23],"Belforte del Chienti":[43.17,13.24],"Cessapalombo":[43.11,13.26],"Fiastra":[43.04,13.16],"Bolognola":[43.00,13.22],"Sarnano":[43.03,13.30],"San Ginesio":[43.11,13.32],"Sant'Angelo in Pontano":[43.10,13.40],"Monte San Martino":[43.03,13.44],"Loro Piceno":[43.17,13.41],"Urbisaglia":[43.20,13.37],"Mogliano":[43.19,13.48],"Corridonia":[43.25,13.51],"Monte San Giusto":[43.24,13.59],"Visso":[42.93,13.09],"Ussita":[42.94,13.14],"Esanatoglia":[43.25,12.95],"Fiuminata":[43.19,12.93],"Gagliole":[43.24,13.07],"Monte Cavallo":[42.99,13.00],"Montecassiano":[43.36,13.44],"Morrovalle":[43.31,13.58]};
+var CAT={esperienza:"#4E9A3A",dormire:"#2A93C9",mangiare:"#8A4B2A",evento:"#C3A93A",luogo:"#7B5EA7",guida:"#6A6660"};
+var ITEMS=[
+ {id:"e1",t:"esperienza",n:"Storie e leggende del lavandeto",c:"Cingoli",cat:"Made in MaMa",tema:["arte","natura"],p:15,u:"a persona",q:"Tutto l'anno, al tramonto",host:"Amor di Lavanda B&B",d:"Una passeggiata al tramonto tra la lavanda, fino a una quercia di circa 450 anni e ai ruderi di un'edicola votiva del XII secolo, con i racconti che li circondano. Si chiude con un aperitivo di prodotti locali.",pal:4,bk:1},
+ {id:"e2",t:"esperienza",n:"I segreti del mulino a pietra",c:"Cingoli",cat:"Made in MaMa",tema:["arte"],p:12,u:"a persona",q:"Su prenotazione",host:"Mulino del territorio",d:"Visita a un mulino tradizionale per scoprire come la macina a pietra trasforma il grano in farina, dalla spiga al pane.",pal:3,bk:1},
+ {id:"e3",t:"esperienza",n:"Mystery Challenge, Cave Escape Room",c:"Montelupone",cat:"Made in MaMa",tema:["arte"],p:20,u:"a persona",q:"Su prenotazione",host:"Borgo di Montelupone",d:"Una escape room ambientata negli spazi sotterranei di uno dei Borghi più belli d'Italia: enigmi, indizi e un'ora per uscire.",pal:5,bk:1},
+ {id:"e4",t:"esperienza",n:"Workshop di tessitura a mano",c:"Appignano",cat:"Made in MaMa",tema:["arte"],p:35,u:"a persona",q:"Su prenotazione",host:"Museo La Stanza del Telaio",d:"Al telaio a mano con chi custodisce una tradizione tessile secolare: impari l'intreccio e porti a casa il tuo primo lavoro.",pal:1,bk:1},
+ {id:"e5",t:"esperienza",n:"Visita ai vigneti e degustazione",c:"Matelica",cat:"Made in MaMa",tema:["gusto","natura"],p:25,u:"a persona",q:"Tutto l'anno",host:"Casa Lucciola",d:"Quattro ettari di vigna in collina, nel cuore del Verdicchio di Matelica. Una piccola cantina familiare, biologica dal 1998 e biodinamica dal 2014, racconta il suo vino nel bicchiere.",pal:2,bk:1},
+ {id:"e6",t:"esperienza",n:"In Vino Relax!",c:"Castelraimondo",cat:"Made in MaMa",tema:["gusto"],p:22,u:"a persona",q:"Tutto l'anno",host:"Tenuta Piano di Rustano",d:"Giardino, vigneti e cantina di una tenuta dalle tradizioni centenarie, dove il clima tra Appennino e Adriatico dà carattere al vino. Degustazione finale dei vini migliori.",pal:2,bk:1},
+ {id:"e7",t:"esperienza",n:"Mystery Tour Montelupone",c:"Montelupone",cat:"Arte e cultura",tema:["arte"],p:10,u:"a persona",q:"Tutti i giorni, in serata",host:"Guide in costume",d:"Una guida in costume medievale accompagna tra vicoli e palazzi dove la storia si fa racconto, divertente e un po' pauroso, fino a Palazzo Magner.",pal:5,bk:1},
+ {id:"e8",t:"esperienza",n:"Sulla via di Aquisgrana",c:"Corridonia",cat:"Arte e cultura",tema:["arte","spirito"],p:12,u:"a persona",q:"Su prenotazione",host:"Guide del territorio",d:"Un itinerario tra arte e storia sulle tracce del legame tra Corridonia e l'epoca carolingia.",pal:0,bk:1},
+ {id:"e9",t:"esperienza",n:"San Severino Marche Experience",c:"San Severino Marche",cat:"Arte e cultura",tema:["arte"],p:18,u:"a persona",q:"Su prenotazione",host:"Guide del territorio",d:"La città dalla piazza ellittica alla pinacoteca, tra affreschi, torri e botteghe.",pal:4,bk:1},
+ {id:"e10",t:"esperienza",n:"Yoga al Lago di Fiastra",c:"Fiastra",cat:"Sport e outdoor",tema:["natura"],p:20,u:"a persona",q:"Da maggio a settembre",host:"Istruttori locali",d:"Una sessione all'aperto sulle rive turchesi del lago, con i Sibillini sullo sfondo.",pal:0,bk:1},
+ {id:"e11",t:"esperienza",n:"La Via delle Creste, traversata dei Sibillini",c:"Bolognola",cat:"Sport e outdoor",tema:["natura"],p:45,u:"a persona",q:"Da giugno a ottobre",host:"Guide escursionistiche",d:"Un trekking in quota lungo i crinali del Parco nazionale dei Monti Sibillini, per escursionisti allenati.",pal:2,bk:1},
+ {id:"e12",t:"esperienza",n:"Pedala in cantina",c:"Matelica",cat:"Sport e outdoor",tema:["natura","gusto"],p:55,u:"a persona",q:"Mezza giornata o giornata intera",host:"Noleggio e-bike locale",d:"In e-bike tra le vigne del Verdicchio, con soste e degustazioni nelle cantine della valle.",pal:3,bk:1},
+ {id:"s1",t:"dormire",n:"Tenuta Grimaldi Wine Resort",c:"Matelica",cat:"Agriturismo",tema:["gusto","relax"],p:160,u:"a notte",q:"Luxury, piscina e spa",d:"In cima a una collina tra i vigneti di famiglia, con vista aperta, piscina e spa. Il vino lo producono loro.",pal:2},
+ {id:"s2",t:"dormire",n:"Palazzo Cortesi",c:"Macerata",cat:"Hotel",tema:["arte"],p:95,u:"a notte",q:"Pet friendly",d:"Nel centro storico, a pochi passi dallo Sferisterio e da Palazzo Buonaccorsi.",pal:1},
+ {id:"s3",t:"dormire",n:"Collerovere Country House",c:"Sant'Angelo in Pontano",cat:"Agriturismo",tema:["natura","relax"],p:90,u:"a notte",q:"Vista colline",d:"Casa di campagna tra le colline, per soggiorni lenti tra borghi e sapori.",pal:3},
+ {id:"s4",t:"dormire",n:"Rifugio Valle Scurosa",c:"Sefro",cat:"Rifugio",tema:["natura"],p:45,u:"a notte",q:"Economico, pet friendly",d:"Un rifugio nel verde dell'Appennino, punto di partenza per escursioni e silenzio.",pal:2},
+ {id:"s5",t:"dormire",n:"B&B La Villa",c:"Fiastra",cat:"B&B",tema:["natura"],p:70,u:"a notte",q:"Vicino al lago",d:"Base comoda per il Lago di Fiastra e le Lame Rosse.",pal:0},
+ {id:"s6",t:"dormire",n:"Antichi Gelsi B&B",c:"Treia",cat:"B&B",tema:["arte","relax"],p:80,u:"a notte",q:"Pet friendly",d:"Nella campagna di Treia, uno dei Borghi più belli d'Italia.",pal:4},
+ {id:"s7",t:"dormire",n:"Due Torri",c:"San Severino Marche",cat:"Hotel",tema:["arte"],p:75,u:"a notte",q:"Con ristorante",d:"Hotel in città, comodo per musei e centro storico.",pal:5},
+ {id:"s8",t:"dormire",n:"Casa Stella di Mare",c:"Potenza Picena",cat:"Appartamento",tema:["relax"],p:85,u:"a notte",q:"Mare, pet friendly",d:"Appartamento sulla costa adriatica, per unire spiaggia e borghi dell'entroterra.",pal:0},
+ {id:"r1",t:"mangiare",n:"La Taverna dell'Artista",c:"Montelupone",cat:"Cucina tipica",tema:["gusto"],p:30,u:"a persona",q:"Fascia media, pet friendly",d:"In un palazzo del Settecento nel cuore del borgo: risotti e ricette marchigiane con materie prime del territorio.",pal:1},
+ {id:"r2",t:"mangiare",n:"Ristorante Due Torri",c:"San Severino Marche",cat:"Cucina tipica",tema:["gusto"],p:30,u:"a persona",q:"Fascia media",d:"Cucina tradizionale maceratese, dai vincisgrassi alle carni locali.",pal:5},
+ {id:"r3",t:"mangiare",n:"La Quercia Scarlatta",c:"Monte San Giusto",cat:"Cucina tipica",tema:["gusto"],p:30,u:"a persona",q:"Fascia media",d:"Piatti della tradizione con prodotti di stagione delle colline.",pal:3},
+ {id:"v1",t:"evento",n:"Macerata Opera Festival",c:"Macerata",cat:"Grandi festival",tema:["arte"],p:30,u:"biglietto da",q:"Luglio e agosto",d:"La lirica sotto le stelle nell'arena dello Sferisterio, uno dei festival d'opera all'aperto più noti in Italia.",pal:4,bk:1},
+ {id:"v2",t:"evento",n:"Musicultura",c:"Macerata",cat:"Grandi festival",tema:["arte"],p:20,u:"biglietto da",q:"Giugno",d:"Il festival della canzone popolare e d'autore, con le serate finali allo Sferisterio.",pal:1},
+ {id:"v3",t:"evento",n:"Teatri Continui",c:"Camerino",cat:"Arte pubblica",tema:["arte"],p:0,u:"",q:"In dieci Comuni",d:"Dieci artisti, dieci borghi, dieci palcoscenici urbani: un circuito teatrale diffuso di opere site-specific.",pal:5},
+ {id:"v4",t:"evento",n:"Ragli e Bagagli",c:"Cessapalombo",cat:"Famiglie",tema:["natura"],p:0,u:"",q:"Primavera",d:"Il festival dedicato agli asini, per grandi e piccini: giochi, escursioni e antichi mestieri al Giardino delle Farfalle.",pal:2},
+ {id:"l1",t:"luogo",n:"Sferisterio",c:"Macerata",cat:"Teatri",tema:["arte"],d:"Arena neoclassica dell'Ottocento, nata per il gioco del pallone col bracciale e oggi palcoscenico dell'opera.",pal:4},
+ {id:"l2",t:"luogo",n:"Lago di Fiastra e Lame Rosse",c:"Fiastra",cat:"Laghi",tema:["natura"],d:"Acque turchesi e, a breve cammino, le guglie rosse scolpite dall'erosione.",pal:0},
+ {id:"l3",t:"luogo",n:"Li Vurgacci",c:"Pioraco",cat:"Luoghi incantevoli",tema:["natura"],d:"Passerelle di legno sopra cascate e forre del fiume Potenza, a due passi dal centro del paese.",pal:2},
+ {id:"l4",t:"luogo",n:"Abbadia di Fiastra",c:"Urbisaglia",cat:"Abbazie e monasteri",tema:["spirito","natura"],d:"Abbazia cistercense immersa in una riserva naturale, tra chiostro, boschi e sentieri.",pal:3},
+ {id:"l5",t:"luogo",n:"Luoghi di San Nicola",c:"Tolentino",cat:"Santuari e cattedrali",tema:["spirito","arte"],d:"La basilica con il Cappellone affrescato, meta di pellegrini da secoli.",pal:1},
+ {id:"l6",t:"luogo",n:"Cammino Francescano della Marca",c:"Camerino",cat:"Cammini",tema:["spirito","natura"],d:"Tappe a piedi tra eremi, conventi e borghi, sulle tracce di San Francesco.",pal:2},
+ {id:"l7",t:"luogo",n:"Casa Leopardi",c:"Recanati",cat:"Personaggi illustri",tema:["arte"],d:"La casa e la biblioteca del poeta, con il colle dell'Infinito a pochi passi.",pal:4},
+ {id:"g1",t:"guida",n:"Galee Sibilline",c:"Sarnano",cat:"Guide naturalistiche",tema:["natura"],d:"Escursioni nel Parco nazionale dei Monti Sibillini.",pal:2,lingue:"Italiano e inglese"},
+ {id:"g2",t:"guida",n:"Centro Culturale Giacomo Leopardi",c:"Recanati",cat:"Guide turistiche",tema:["arte"],d:"Visite guidate ai luoghi leopardiani.",pal:4,lingue:"Italiano e inglese"},
+ {id:"g3",t:"guida",n:"Museo La Stanza del Telaio",c:"Appignano",cat:"Guide turistiche",tema:["arte"],d:"Visite al museo e al laboratorio tessile.",pal:1,lingue:"Italiano"}
+];
+var PRODOTTI=["Vincisgrassi alla Maceratese STG","Ciauscolo IGP","Verdicchio di Matelica DOC","Vernaccia di Serrapetrona","Colli Maceratesi DOC Ribona","Vino di visciola","Fagiolo di Laverino","Mela rosa dei Sibillini","Farina macinata a pietra","Canapa"];
+var RICETTE=["Vincisgrassi","Frustingo","Calcioni al formaggio","Crescia fogliata","Coniglio in porchetta","Frascarelli","Crema fritta","Cavallucci","Pizza co' li sgrisci","Ciambelline"];
+var TEMI={arte:["Arte e cultura","Città d'arte, borghi storici, teatri, musei, biblioteche e rocche: una trama millenaria che due università antiche, Macerata e Camerino, tengono ancora viva.",["Musei e palazzi storici","Teatri","Biblioteche","Giardini storici","Personaggi illustri","Grandi festival","Rocche e torri"],4],
+ natura:["Sport e natura","Un parco nazionale, riserve, laghi, gole e sentieri. E poi sci, kayak, rafting, volo libero, torrentismo, cicloturismo ed equitazione.",["Laghi","Luoghi incantevoli","Parco nazionale dei Monti Sibillini","Riserve naturali","Cammino delle Terre Mutate","Percorsi trekking","Percorsi bike"],2],
+ spirito:["Spiritualità","Abbazie, eremi, santuari e cammini: la Marca Maceratese si può vivere anche in raccoglimento.",["Abbazie e monasteri","Santuari e cattedrali","Eremi","Cammino Francescano della Marca","Antica Via Lauretana","Luoghi di San Filippo Neri","Feste religiose"],3]};
+var LBL={esperienza:"Esperienza",dormire:"Dove dormire",mangiare:"Dove mangiare",evento:"Evento",luogo:"Luogo",guida:"Guida"};
+
+/* ---------- Stato ---------- */
+var S={favs:[],own:[],reqs:null,arr:null,nights:2,pers:2};
+function load(){try{S.favs=JSON.parse(localStorage.getItem("tp_mama_favs")||"[]");S.own=JSON.parse(localStorage.getItem("tp_mama_own")||"[]");S.reqs=JSON.parse(localStorage.getItem("tp_mama_reqs")||"null");}catch(e){}}
+function save(){try{localStorage.setItem("tp_mama_favs",JSON.stringify(S.favs));localStorage.setItem("tp_mama_own",JSON.stringify(S.own));localStorage.setItem("tp_mama_reqs",JSON.stringify(S.reqs));}catch(e){} $("#favCount").textContent=S.favs.length;}
+load();
+S.own.forEach(function(o){if(!ITEMS.some(function(i){return i.id===o.id;}))ITEMS.push(o);});
+if(!S.reqs)S.reqs=[{id:"q1",who:"Giulia R.",what:"Visita ai vigneti e degustazione",when:"Sabato, ore 10",pers:4,st:"new"},{id:"q2",who:"Thomas K.",what:"Visita ai vigneti e degustazione",when:"Domenica, ore 16",pers:2,st:"new"},{id:"q3",who:"Marco e Anna",what:"Visita ai vigneti e degustazione",when:"Venerdì, ore 17",pers:2,st:"ok"}];
+try{var hm=location.hash.match(/viaggio=([\w,]+)/);if(hm)S.favs=hm[1].split(",").filter(function(id){return ITEMS.some(function(i){return i.id===id;});});}catch(e){}
+var d0=new Date();d0.setDate(d0.getDate()+14);S.arr=d0.toISOString().slice(0,10);
+
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function euro(n){return n.toLocaleString("it-IT")+" €";}
+function byId(id){return ITEMS.find(function(i){return i.id===id;});}
+function toast(t){var x=$("#toast");x.textContent=t;x.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(function(){x.classList.remove("show");},2400);}
+function mod(k,t){return '<span class="mod '+k+'">'+(k==="b"?"Modulo base: ":"Modulo avanzato: ")+t+'</span>';}
+
+/* ---------- Illustrazioni (segnaposto in attesa delle foto) ---------- */
+var PAL=[["#9CC9DC","#6FA3B6","#2A93C9","#2F6048"],["#EBCFB0","#C9926B","#8A4B2A","#5B3522"],["#C9DDB8","#93BC7A","#4E9A3A","#2E5A24"],["#EEDFB0","#D2B865","#C3A93A","#6E5E1E"],["#E0D2E4","#B39BBE","#7B5EA7","#46365F"],["#F4D9C6","#E1A585","#B96A45","#6B3A26"]];
+function art(item,big){
+  var p=PAL[(item.pal||0)%PAL.length],s=0;for(var k=0;k<item.id.length;k++)s+=item.id.charCodeAt(k)*(k+3);
+  var x=s%160,lake=item.c==="Fiastra"||item.id==="l2"||item.id==="s8";
+  var tow=item.t==="luogo"||item.t==="evento"||item.tema.indexOf("arte")>=0;
+  var v='<svg viewBox="0 0 320 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="320" height="220" fill="'+p[0]+'"/>'+
+  '<circle cx="'+(60+x)+'" cy="50" r="18" fill="#fff" opacity=".6"/>'+
+  '<path d="M0 118 L55 80 L105 104 L165 64 L225 98 L278 72 L320 92 V220 H0Z" fill="'+p[1]+'"/>';
+  if(tow) v+='<g fill="#F2EADF"><rect x="'+(110+x/3)+'" y="96" width="18" height="30"/><rect x="'+(130+x/3)+'" y="82" width="11" height="44"/><rect x="'+(143+x/3)+'" y="104" width="26" height="22"/><rect x="'+(172+x/3)+'" y="98" width="16" height="28"/></g><g fill="'+p[3]+'" opacity=".7"><rect x="'+(133+x/3)+'" y="88" width="3" height="5"/><rect x="'+(150+x/3)+'" y="110" width="4" height="5"/></g>';
+  if(lake) v+='<path d="M0 142 C80 132 180 150 320 138 V166 H0Z" fill="'+PAL[0][2]+'"/><path d="M40 148 h36 M170 144 h46" stroke="#fff" stroke-opacity=".5"/>';
+  v+='<path d="M0 150 C60 128 130 160 200 140 S290 128 320 142 V220 H0Z" fill="'+p[2]+'"/>'+
+  '<path d="M0 184 C80 164 170 196 250 176 S300 172 320 180 V220 H0Z" fill="'+p[3]+'"/>';
+  if(item.t==="mangiare"||item.tema.indexOf("gusto")>=0) v+='<g stroke="'+p[3]+'" stroke-width="2" opacity=".55">'+[0,1,2,3,4,5].map(function(i){return '<path d="M'+(20+i*50)+' 220 L'+(90+i*30)+' 160"/>';}).join("")+'</g>';
+  return v+'</svg>';
+}
+function heart(it){var id=it.id,on=S.favs.indexOf(id)>=0;return '<button class="heart" data-fav="'+id+'" aria-pressed="'+on+'" aria-label="'+(on?"Togli dal":"Aggiungi al")+' mio viaggio: '+esc(it.n)+'"><svg viewBox="0 0 24 24" fill="none" stroke="#8A4B2A" stroke-width="2"><path d="M12 21s-7-4.4-9.3-9A5.2 5.2 0 0 1 12 6a5.2 5.2 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z"/></svg></button>';}
+function priceTxt(i){if(!i.p)return i.t==="evento"?"Ingresso libero":"";return (i.t==="evento"?"da ":"da ")+euro(i.p)+" "+(i.t==="evento"?"":i.u);}
+function card(i){
+  var pr=priceTxt(i);
+  return '<article class="card" id="c-'+i.id+'"><a class="thumb" href="#/scheda/'+i.id+'" aria-label="Apri la scheda '+esc(i.n)+'">'+art(i)+'<span class="tag">'+esc(i.cat)+'</span>'+(pr&&i.t!=="luogo"&&i.t!=="guida"?'<span class="price">'+esc(pr)+'</span>':'')+'</a>'+(i.id==='draft'?'':heart(i))+
+  '<div class="cbody"><h3><a href="#/scheda/'+i.id+'" style="text-decoration:none">'+esc(i.n)+'</a></h3><span class="where">'+esc(i.c)+'</span>'+(i.q?'<span class="meta">'+esc(i.q)+'</span>':'')+
+  (i.own?'<span class="meta" style="color:var(--green);font-weight:700">Pubblicata ora dall\'Area operatori</span>':'')+
+  '<div class="cact">'+(i.bk?'<button class="btn sm" data-book="'+i.id+'">Prenota</button>':'')+'<a class="btn line sm" href="#/scheda/'+i.id+'">Scopri</a></div></div></article>';
+}
+
+/* ---------- Mappa illustrata ---------- */
+function proj(c){var g=GEO[c];if(!g)return null;return [(g[1]-12.86)*640,(43.47-g[0])*820];}
+function mapSvg(list,opts){
+  opts=opts||{};
+  var v='<svg class="map" viewBox="0 0 600 460" role="img" aria-label="Mappa illustrata della Marca Maceratese"><rect width="600" height="460" fill="#EFEADF"/>'+
+  '<path d="M560 0 C540 90 548 160 568 240 C580 300 590 380 600 460 H600 V0Z" fill="#A9D1E2"/>'+
+  '<text x="572" y="130" font-family="IBM Plex Serif,Georgia,serif" font-style="italic" font-size="12" fill="#3E7F9B" transform="rotate(80 572 130)">Mare Adriatico</text>'+
+  '<path d="M20 380 C80 330 150 360 210 330 C260 305 300 350 330 400 L330 460 H0 V400Z" fill="#DCD3BF"/>'+
+  '<text x="120" y="420" font-family="IBM Plex Serif,Georgia,serif" font-style="italic" font-size="13" fill="#6A6660">Monti Sibillini</text>'+
+  '<g fill="none" stroke="#DAD1BD" stroke-width="1.2"><path d="M0 120 C120 100 240 150 380 120 S520 80 560 100"/><path d="M0 230 C140 210 250 260 380 230 S520 200 560 215"/></g>'+
+  '<path d="M170 348 C180 342 196 344 200 352 C204 360 190 366 178 363 C168 360 162 354 170 348Z" fill="#8FC1D4"/>'+
+  '<path d="M150 250 C230 250 300 260 380 250 S500 240 560 245" fill="none" stroke="#8FC1D4" stroke-width="2.5"/>'+
+  '<path d="M120 190 C220 180 330 190 440 170 S520 160 560 160" fill="none" stroke="#8FC1D4" stroke-width="2"/>';
+  for(var c in GEO){var p=proj(c);if(!p)continue;var rb=REBUILD.indexOf(c)>=0;v+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(c==="Macerata"?4:2.6)+'" fill="'+(rb?"#2A93C9":"#8A857C")+'"/>';
+    if(opts.labels||["Macerata","Camerino","Civitanova Marche","Recanati","Tolentino","Matelica","Sarnano","Visso","Cingoli","Fiastra","San Severino Marche"].indexOf(c)>=0) v+='<text x="'+(p[0]+6).toFixed(1)+'" y="'+(p[1]-5).toFixed(1)+'" font-family="Montserrat,sans-serif" font-size="'+(c==="Macerata"?12:10)+'" font-weight="'+(c==="Macerata"?700:500)+'" fill="#3A3A3A">'+esc(c)+'</text>';}
+  var used={};
+  (list||[]).forEach(function(i){var p=proj(i.c);if(!p)return;used[i.c]=(used[i.c]||0)+1;var n=used[i.c]-1,a=n*1.4,r=n?13:0,x=p[0]+Math.cos(a)*r+8,y=p[1]+Math.sin(a)*r+8;
+    v+='<g class="pin" id="pin-'+i.id+'" tabindex="0" role="button" aria-label="'+esc(i.n)+', '+esc(i.c)+'" data-pin="'+i.id+'"><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="7" fill="'+CAT[i.t]+'"/></g>';});
+  if(opts.focus){var fp=proj(opts.focus);if(fp)v+='<circle cx="'+fp[0]+'" cy="'+fp[1]+'" r="16" fill="none" stroke="#E97E00" stroke-width="3"/>';}
+  return v+'</svg>';
+}
+function legend(){return '<div class="legend">'+[["esperienza","Esperienze"],["dormire","Dormire"],["mangiare","Mangiare"],["evento","Eventi"],["luogo","Luoghi"]].map(function(x){return '<span><i style="background:'+CAT[x[0]]+'"></i>'+x[1]+'</span>';}).join("")+'</div>';}
+function bindPins(root){
+  $$(".pin",root).forEach(function(g){var id=g.getAttribute("data-pin");
+    var go=function(){var c=$("#c-"+id);if(c){c.scrollIntoView({behavior:"smooth",block:"center"});c.classList.add("hl");setTimeout(function(){c.classList.remove("hl");},1500);}else location.hash="#/scheda/"+id;};
+    g.onclick=go;g.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}};
+    g.onmouseenter=function(){hl(id,true);};g.onmouseleave=function(){hl(id,false);};});
+  $$(".card",root).forEach(function(c){var id=c.id.slice(2);c.onmouseenter=function(){hl(id,true);};c.onmouseleave=function(){hl(id,false);};});
+}
+function hl(id,on){var p=document.getElementById("pin-"+id);if(p)p.classList.toggle("on",on);var c=$("#c-"+id);if(c)c.classList.toggle("hl",on);}
+
+/* ---------- Meteo e countdown illustrativi ---------- */
+var WI=["☀️","⛅","🌤","🌧","⛅"];
+function wx(){var d=new Date(S.arr),o="";for(var k=0;k<=S.nights;k++){var x=new Date(d);x.setDate(d.getDate()+k);var s=(x.getDate()*13+x.getMonth()*7)%5,t=15+(x.getDate()*3)%9;o+='<div class="wd">'+x.toLocaleDateString("it-IT",{weekday:"short",day:"numeric"})+'<b>'+WI[s]+'</b>'+t+'° / '+(t-8)+'°</div>';}return o;}
+function nextSpot(){var n=new Date(),t=new Date(n.getFullYear(),n.getMonth(),n.getDate()+19,21,0);return t;}
+var SPOT=nextSpot();
+function cd(){var ms=Math.max(0,SPOT-new Date()),g=Math.floor(ms/864e5),o=Math.floor(ms/36e5)%24,m=Math.floor(ms/6e4)%60;return '<div><b>'+g+'</b><span>giorni</span></div><div><b>'+o+'</b><span>ore</span></div><div><b>'+m+'</b><span>minuti</span></div>';}
+
+/* ---------- Pagine ---------- */
+var app=$("#app");
+function band(title,pal,id){return '<div class="band">'+art({id:id||title,pal:pal,t:"luogo",tema:["arte"],c:""})+'<h1>'+esc(title)+'</h1></div>';}
+
+function pHome(){
+  var exps=ITEMS.filter(function(i){return i.t==="esperienza";}).slice(0,6);
+  var evs=ITEMS.filter(function(i){return i.t==="evento";});
+  return '<section class="hero" aria-label="Immagini del territorio">'+
+    '<div class="hpanel">'+art({id:"hx1",pal:0,t:"luogo",tema:["arte"],c:"Fiastra"})+'<b>La costa adriatica e il lago</b></div>'+
+    '<div class="hpanel">'+art({id:"hx2",pal:2,t:"esperienza",tema:["natura"],c:""})+'<b>I Monti Sibillini in fiore</b></div></section>'+
+  '<section class="intro"><div><h1>Un solo territorio, infinite esperienze.</h1>'+
+    '<p>Cinquantacinque Comuni tra mare e montagna, colline, laghi e aree naturali. Borghi tra i più belli d\'Italia, presidi Slow Food, festival internazionali e distretti del Made in Italy.</p>'+
+    '<p>Arte, natura, tradizione e molto altro ancora. Preparati a scoprire MaMa!</p>'+mod("b","Struttura territoriale")+'</div>'+
+    '<form class="search" id="homeSearch" onsubmit="return false"><h2>Organizza il tuo soggiorno</h2>'+
+      '<div class="sgrid"><div><label class="f" for="hsQ">Cosa cerchi</label><input id="hsQ" placeholder="Esperienze, borghi, eventi"></div>'+
+      '<div><label class="f" for="hsD">Arrivo</label><input id="hsD" type="date" value="'+S.arr+'"></div>'+
+      '<div><label class="f" for="hsN">Notti</label><select id="hsN">'+[1,2,3,4,5,6,7].map(function(n){return '<option'+(n===S.nights?" selected":"")+'>'+n+'</option>';}).join("")+'</select></div></div>'+
+      '<div class="wx" id="wx">'+wx()+'</div><div class="meta" style="margin-top:4px">Meteo di esempio per le tue date.</div>'+
+      '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="hsGo">Cerca</button><button class="btn line" type="button" data-ask="Ho '+S.nights+' notti, cosa mi consigli?">Chiedi all\'assistente</button></div>'+
+      mod("b","Filtri, wishlist e ricerca")+'</form></section>'+
+  '<section class="sec"><div class="wrap"><div class="spot"><div><h3>In evidenza: Teatri Continui</h3><p>Dieci artisti, dieci borghi, dieci palcoscenici urbani. Inaugurazione della prossima installazione.</p>'+mod("a","Spotlight")+'</div><div class="cd" id="cd">'+cd()+'</div><a class="btn" href="#/scheda/v3">Scopri il programma</a></div></div></section>'+
+  '<section class="sec" style="padding-top:0"><div class="wrap"><h2 class="stitle"><em style="color:var(--green)">Esperienze</em> per tutti i gusti</h2><p class="lead">Attività ideate e gestite da chi vive il territorio, da un\'ora a più giorni.</p><div class="grid">'+exps.map(card).join("")+'</div><p style="text-align:center;margin-top:24px"><a class="btn" href="#/esperienze">Scopri tutte le esperienze</a></p>'+mod("a","Motore prenotazioni")+'</div></section>'+
+  '<section class="sec soft"><div class="wrap"><h2 class="stitle">Scegli la tua MaMa</h2><p class="lead">Quattro modi di attraversare lo stesso territorio.</p><div class="themes">'+
+    [["arte","Arte e cultura","Borghi, teatri, musei",4],["natura","Sport e natura","Parchi, laghi, sentieri",2],["spirito","Spiritualità","Abbazie, eremi, cammini",3],["gusto","Gusto","Sapori e prodotti tipici",5]].map(function(t){return '<a class="theme" href="'+(t[0]==="gusto"?"#/gusto":"#/tema/"+t[0])+'">'+art({id:"t"+t[0],pal:t[3],t:"luogo",tema:[t[0]],c:t[0]==="natura"?"Fiastra":""})+'<div><h3>'+t[1]+'</h3><p>'+t[2]+'</p></div></a>';}).join("")+'</div></div></section>'+
+  '<section class="sec"><div class="wrap"><h2 class="stitle">Che spettacolo!</h2><p class="lead">Festival, stagioni teatrali e feste di paese.</p><div class="grid">'+evs.map(card).join("")+'</div><p style="text-align:center;margin-top:24px"><a class="btn" href="#/eventi">Scopri tutti gli eventi</a></p></div></section>'+
+  '<section class="sec soft"><div class="wrap recipe"><div><p class="meta" style="margin:0">Ricette di MaMa</p><h2 class="stitle">Sua Maestà il Vincisgrasso alla Maceratese</h2><p>Dal 2022 è Specialità Tradizionale Garantita europea. Sette strati, un quadrato di dieci centimetri per porzione e una ricetta che mette d\'accordo intere generazioni.</p><a class="btn" href="#/gusto">Scopri le altre ricette</a>'+mod("b","Offerte, pacchetti e prodotti tipici")+'</div><div class="ill">'+art({id:"vinc",pal:5,t:"mangiare",tema:["gusto"],c:""})+'</div></div></section>'+
+  '<section class="sec"><div class="wrap"><h2 class="stitle">Il territorio di MaMa</h2><p class="lead">Tocca un Comune per vedere cosa offre. I Comuni con il punto blu partecipano al progetto MaMa Tourism Rebuild.</p><div class="comuni">'+COMUNI.map(function(c){return '<button data-comune="'+esc(c)+'"'+(REBUILD.indexOf(c)>=0?' class="rb"':'')+'>'+esc(c)+'</button>';}).join("")+'</div></div></section>'+
+  '<section class="sec soft"><div class="wrap"><h2 class="stitle">Guarda prima di partire</h2><p class="lead">Il Lago di Fiastra dal belvedere. Trascina per guardarti intorno.</p>'+mod("a","Contenuti, Virtual Tour 360°")+pano()+'</div></section>'+
+  '<section class="sec"><div class="wrap"><div class="dls"><a href="#" data-dl="Cartina turistica">Scarica la cartina turistica</a><a href="#" data-dl="Guida turistica">Scarica la guida turistica</a><a href="#" data-dl="MaMa Box">Scarica il MaMa Box</a></div></div></section>';
+}
+function pano(){return '<div class="pano" id="pano" tabindex="0" aria-label="Panorama del Lago di Fiastra, usa le frecce per spostarti"><svg viewBox="0 0 2400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="ps" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9CC9DC"/><stop offset="1" stop-color="#F4E6D0"/></linearGradient><linearGradient id="pl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3F97B5"/><stop offset="1" stop-color="#1F5E70"/></linearGradient></defs><rect width="2400" height="500" fill="url(#ps)"/><circle cx="1650" cy="120" r="44" fill="#FBEBC8"/><path d="M0 260 L180 150 L320 230 L520 110 L700 220 L900 140 L1100 230 L1300 120 L1500 210 L1720 100 L1900 220 L2100 140 L2400 250 V500 H0Z" fill="#93AFA9"/><path d="M0 300 L220 210 L420 280 L640 190 L860 290 L1080 200 L1320 290 L1540 200 L1760 290 L2000 210 L2400 300 V500 H0Z" fill="#5E8A5A"/><path d="M0 330 C300 310 600 340 900 325 S1500 320 1800 335 2200 320 2400 330 V420 H0Z" fill="url(#pl)"/><path d="M0 400 C300 370 520 430 860 400 S1500 380 1800 410 2200 390 2400 405 V500 H0Z" fill="#3E6B37"/><g fill="#B6553A"><path d="M1560 330 l30 -70 l30 70z"/><path d="M1610 334 l22 -56 l22 56z"/></g><g fill="#2E4F2A"><path d="M300 400 l14 -46 l14 46z"/><path d="M330 404 l12 -38 l12 38z"/><path d="M1400 396 l16 -52 l16 52z"/><path d="M2050 402 l14 -44 l14 44z"/></g><g stroke="#fff" stroke-opacity=".35"><path d="M200 360 h80M700 350 h120M1500 360 h90M1900 348 h110"/></g></svg><span class="hint">Trascina per esplorare</span></div>';}
+
+function listPage(o){
+  // o: {title, lead, types, pal, modTxt, filterCat}
+  var cats=[];ITEMS.forEach(function(i){if(o.types.indexOf(i.t)>=0&&(!o.tema||i.tema.indexOf(o.tema)>=0)&&cats.indexOf(i.cat)<0)cats.push(i.cat);});
+  var html=band(o.title,o.pal,o.key)+'<div class="wrap"><div class="crumbs"><a href="#/">Home</a> / '+esc(o.title)+'</div><p class="lead" style="margin-top:8px">'+esc(o.lead)+'</p>'+(o.extra||"")+
+  '<div class="filters"><div><label class="f" for="fC">Scegli il Comune</label><select id="fC"><option value="">Tutti i Comuni</option>'+COMUNI.map(function(c){return '<option'+(o.comune===c?" selected":"")+'>'+esc(c)+'</option>';}).join("")+'</select></div>'+
+  '<div><label class="f" for="fT">Tipologia</label><select id="fT"><option value="">Tutte</option>'+cats.map(function(c){return '<option>'+esc(c)+'</option>';}).join("")+'</select></div>'+
+  '<div><label class="f" for="fQ">Cerca</label><input id="fQ" type="search" placeholder="Nome o parola chiave"></div></div>'+mod("b",o.modTxt||"Filtri, wishlist e ricerca")+
+  '<div class="maplay"><div><p class="meta" id="nres" aria-live="polite"></p><div class="grid" id="lgrid"></div></div><aside class="mapbox"><div class="maphead"><b>Sulla mappa</b>'+legend()+'</div><div id="lmap"></div><div class="mapnote">Tocca un punto per vedere la scheda.</div></aside></div></div><div style="height:56px"></div>';
+  app.innerHTML=html;
+  function upd(){
+    var c=$("#fC").value,t=$("#fT").value,q=$("#fQ").value.trim().toLowerCase();
+    var l=ITEMS.filter(function(i){return o.types.indexOf(i.t)>=0&&(!o.tema||i.tema.indexOf(o.tema)>=0)&&(!c||i.c===c)&&(!t||i.cat===t)&&(!q||(i.n+" "+i.c+" "+i.d).toLowerCase().indexOf(q)>=0);});
+    $("#nres").textContent=l.length+(l.length===1?" risultato":" risultati")+(c?" a "+c:"");
+    $("#lgrid").innerHTML=l.length?l.map(card).join(""):'<div class="empty">Nessun risultato con questi filtri. Scegli un altro Comune o togli la parola cercata.</div>';
+    $("#lmap").innerHTML=mapSvg(l,{focus:c});bindPins(app);
+  }
+  ["#fC","#fT"].forEach(function(s){$(s).onchange=upd;});$("#fQ").oninput=upd;upd();
+}
+
+function pTema(k){var t=TEMI[k];listPage({title:t[0],lead:t[1],types:["luogo","esperienza","evento"],tema:k,pal:t[3],key:"tema"+k,extra:'<div class="chips" style="margin-bottom:22px">'+t[2].map(function(x){return '<span class="chip">'+esc(x)+'</span>';}).join("")+'</div>',modTxt:"Schede POI e itinerari"});}
+
+function pGusto(){
+  app.innerHTML=band("Gusto",5,"gusto")+'<div class="wrap"><div class="crumbs"><a href="#/">Home</a> / Gusto</div>'+
+  '<section class="sec" style="padding-top:10px"><h2 class="stitle">Prodotti tipici</h2><p class="lead">Dal pesce dell\'Adriatico ai salumi dell\'entroterra, dal miele al vino, dalle lenticchie alla mela rosa dei Sibillini.</p><div class="grid">'+
+  PRODOTTI.map(function(p,i){return '<article class="card"><div class="thumb">'+art({id:"p"+i,pal:i%6,t:"mangiare",tema:["gusto"],c:""})+'</div><div class="cbody"><h3>'+esc(p)+'</h3><div class="cact"><button class="btn sm" data-shop="'+esc(p)+'">Acquista online</button></div></div></article>';}).join("")+
+  '</div>'+mod("b","Shop ed e-commerce base")+'</section>'+
+  '<section class="sec" style="padding-top:0"><h2 class="stitle">Le ricette di MaMa</h2><p class="lead">Piatti della tradizione da rifare a casa.</p><div class="chips">'+RICETTE.map(function(r){return '<span class="chip">'+esc(r)+'</span>';}).join("")+'</div>'+mod("b","Blog e pagine istituzionali")+'</section>'+
+  '<section class="sec" style="padding-top:0"><h2 class="stitle">Dove mangiare</h2><div class="grid">'+ITEMS.filter(function(i){return i.t==="mangiare";}).map(card).join("")+'</div><p style="margin-top:20px"><a class="btn" href="#/mangiare">Vedi tutti i ristoranti sulla mappa</a></p></section></div>';
+}
+
+function pScheda(id){
+  var i=byId(id);if(!i){app.innerHTML='<div class="wrap sec"><div class="empty">Questa scheda non esiste più. <a href="#/">Torna alla home</a></div></div>';return;}
+  var sib=ITEMS.filter(function(x){return x.id!==i.id&&(x.c===i.c||x.tema.some(function(t){return i.tema.indexOf(t)>=0;}));}).slice(0,4);
+  var near=ITEMS.filter(function(x){return x.id!==i.id&&x.c===i.c;});
+  var facts='<div><span>Dove</span><span>'+esc(i.c)+'</span></div><div><span>Tipologia</span><span>'+esc(i.cat)+'</span></div>'+(i.q?'<div><span>Quando</span><span>'+esc(i.q)+'</span></div>':'')+(i.host?'<div><span>Host</span><span>'+esc(i.host)+'</span></div>':'')+(i.lingue?'<div><span>Lingue</span><span>'+esc(i.lingue)+'</span></div>':'')+(priceTxt(i)&&i.t!=="luogo"&&i.t!=="guida"?'<div><span>Prezzo</span><span><b>'+esc(priceTxt(i))+'</b></span></div>':'');
+  app.innerHTML='<div class="wrap"><div class="crumbs"><a href="#/">Home</a> / '+esc(LBL[i.t])+' / '+esc(i.n)+'</div>'+
+  '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap"><div><h1 style="font-size:clamp(28px,3.6vw,40px);margin:0">'+esc(i.n)+'</h1><p class="where" style="justify-content:flex-start;margin:6px 0 16px">'+esc(i.c)+'</p></div><div style="display:flex;gap:8px"><button class="btn line sm" id="shareS">Condividi</button><button class="btn line sm" data-fav="'+i.id+'">'+(S.favs.indexOf(i.id)>=0?"Nel tuo viaggio":"Aggiungi al viaggio")+'</button></div></div>'+
+  '<div class="gallery"><div>'+art(i)+'</div><div>'+art({id:i.id+"b",pal:(i.pal+2)%6,t:i.t,tema:i.tema,c:i.c})+'</div><div>'+art({id:i.id+"c",pal:(i.pal+4)%6,t:"luogo",tema:["arte"],c:""})+'</div></div>'+
+  '<div class="detail"><div><h2 style="font-size:22px">Cosa ti aspetta</h2><p style="font-size:17px;font-weight:300">'+esc(i.d)+'</p>'+
+  (i.host?'<h2 style="font-size:22px">Qualcosa in più sul tuo host</h2><p>'+esc(i.host)+' fa parte della rete degli operatori di MaMa e aggiorna questa scheda in autonomia dall\'Area operatori.</p>'+mod("b","Area operatori self-service"):'')+
+  '<div class="dnote"><b>MaMa consiglia:</b> '+(near.length?"a "+esc(i.c)+" trovi anche "+near.slice(0,2).map(function(x){return '<a href="#/scheda/'+x.id+'">'+esc(x.n)+'</a>';}).join(" e ")+".":"abbina questa visita a un'esperienza nei Comuni vicini.")+'</div>'+
+  '<h2 style="font-size:22px">Posizione</h2><div class="mapbox" style="position:static">'+mapSvg([i],{focus:i.c})+'</div>'+
+  '<h2 style="font-size:22px;margin-top:30px">Potrebbe interessarti</h2><div class="grid">'+sib.map(card).join("")+'</div></div>'+
+  '<aside class="dside"><b style="font-size:18px">'+(i.bk?"Prenota questa esperienza":i.t==="dormire"?"Contatta la struttura":"Informazioni")+'</b><div class="facts">'+facts+'</div>'+
+  (i.bk?'<button class="btn green" style="width:100%;justify-content:center" data-book="'+i.id+'">Verifica disponibilità</button>'+mod("a","Motore prenotazioni"):i.t==="dormire"?'<button class="btn" style="width:100%;justify-content:center" data-book="'+i.id+'">Richiedi disponibilità</button>'+mod("a","Stay manager"):'<button class="btn line" style="width:100%;justify-content:center" data-fav="'+i.id+'">Salva nel mio viaggio</button>')+
+  '<p class="meta" style="margin-top:12px">Ogni operatore sceglie come farsi contattare: prenotazione, email, telefono o sito.</p>'+mod("b","Cosa fare, dove dormire, mangiare")+'</aside></div></div><div style="height:56px"></div>';
+  bindPins(app);
+  $("#shareS").onclick=function(){copy(location.href,"Link della scheda copiato");};
+}
+
+function pTerritorio(){
+  var counts={};ITEMS.forEach(function(i){counts[i.c]=(counts[i.c]||0)+1;});
+  app.innerHTML=band("Il territorio di MaMa",2,"terr")+'<div class="wrap"><div class="crumbs"><a href="#/">Home</a> / Il territorio</div><p class="lead">Cinquantacinque Comuni tra l\'Adriatico e i Monti Sibillini. I punti blu indicano i Comuni del progetto MaMa Tourism Rebuild.</p>'+mod("b","Struttura territoriale")+
+  '<div class="maplay"><div class="mapbox" style="position:static">'+mapSvg([], {labels:true})+'</div><div><div class="comuni" style="columns:2 160px">'+COMUNI.map(function(c){return '<button data-comune="'+esc(c)+'"'+(REBUILD.indexOf(c)>=0?' class="rb"':'')+'>'+esc(c)+(counts[c]?' <span style="color:var(--green)">('+counts[c]+')</span>':'')+'</button>';}).join("")+'</div></div></div></div><div style="height:56px"></div>';
+}
+
+function pServizi(){
+  app.innerHTML=band("Servizi al turista",1,"serv")+'<div class="wrap"><div class="crumbs"><a href="#/">Home</a> / Servizi al turista</div><p class="lead">Professionisti del territorio con cui organizzare un soggiorno su misura.</p><div class="grid">'+ITEMS.filter(function(i){return i.t==="guida";}).map(card).join("")+'</div>'+mod("b","Cosa fare, dove dormire, mangiare")+'</div><div style="height:56px"></div>';
+}
+function pArrivare(){
+  app.innerHTML=band("Come arrivare",0,"arr")+'<div class="wrap sec" style="padding-top:20px"><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">'+
+  [["In auto","Dall\'Adriatico: A14, uscita Civitanova Marche-Macerata, poi Superstrada 77 della Val di Chienti. Oppure uscita Loreto-Porto Recanati. Dal Tirreno: A1 e poi SS3 Flaminia fino al bivio per la SS77."],["In aereo","Aeroporto delle Marche Raffaello Sanzio di Falconara Marittima, poi A14 in auto oppure pullman di linea."],["In treno","Linea Civitanova Marche, Macerata, Fabriano, con collegamenti dalla dorsale adriatica."]].map(function(x){return '<div class="panel"><h2>'+x[0]+'</h2><p>'+x[1]+'</p></div>';}).join("")+'</div>'+mod("b","Blog e pagine istituzionali")+'</div>';
+}
+function pApi(){
+  app.innerHTML=band("Interoperabilità e API",0,"api")+'<div class="wrap sec" style="padding-top:20px"><div class="detail"><div><p style="font-size:17px">Le API di MaMa permettono a enti, operatori e software terzi di consultare i dati pubblici del turismo del territorio: schede, eventi, esperienze, strutture. Lo stesso dato alimenta il portale, le app e le piattaforme nazionali.</p>'+
+  '<div class="panel" style="margin-top:18px"><h2 style="font-size:18px">Esempio di risposta</h2><pre style="overflow-x:auto;background:var(--soft);padding:14px;border-radius:6px;font-size:13px">GET /api/v1/esperienze?comune=Matelica\n[\n  {\n    "id": "e5",\n    "nome": "Visita ai vigneti e degustazione",\n    "comune": "Matelica",\n    "prezzo_da": 25,\n    "prenotabile": true\n  }\n]</pre></div>'+mod("b","Hub API e interoperabilità")+'</div>'+
+  '<aside class="dside"><b>Richiedi l\'accesso</b><div class="fgrid2" style="margin-top:12px"><div><label class="f" for="aE">Ente o azienda</label><input id="aE"></div><div><label class="f" for="aM">Email del referente</label><input id="aM" type="email"></div><div><label class="f" for="aU">Utilizzo previsto</label><textarea id="aU" rows="3"></textarea></div><button class="btn tp" id="aGo">Invia la richiesta</button><div id="aMsg" aria-live="polite"></div></div><p class="meta">Conforme al Tourism Digital Hub del Ministero del Turismo.</p></aside></div></div>';
+  $("#aGo").onclick=function(){$("#aMsg").innerHTML=$("#aE").value.trim()&&/\S+@\S+\.\S+/.test($("#aM").value)?'<div class="ok">Richiesta registrata. In questa demo nessun dato viene inviato.</div>':'<div class="err">Inserisci ente ed email validi.</div>';};
+}
+
+/* ---------- Area operatori ---------- */
+var OP={logged:false,tab:"home",step:0,draft:{n:"",c:"Matelica",cat:"Made in MaMa",p:25,q:"Tutto l'anno",d:"",host:"",inc:""}};
+function pOperatori(){
+  if(!OP.logged){
+    app.innerHTML='<div class="wrap"><div class="login panel"><h2>Area operatori</h2><p class="sub">Strutture, ristoranti, guide e produttori gestiscono in autonomia la propria presenza sul portale.</p>'+
+    '<div class="fgrid2"><div><label class="f" for="lU">Email</label><input id="lU" value="demo@operatore.it" autocomplete="off"></div><div><label class="f" for="lP">Password</label><input id="lP" type="password" value="demo" autocomplete="off"></div>'+
+    '<button class="btn tp" id="lGo">Entra nella demo</button><p class="meta" style="margin:0">Accesso dimostrativo: nessuna credenziale reale.</p></div>'+mod("b","Area operatori self-service")+'</div></div>';
+    $("#lGo").onclick=function(){OP.logged=true;pOperatori();};return;
+  }
+  var tabs=[["home","Panoramica"],["schede","Le mie schede"],["nuova","Nuova esperienza"],["richieste","Richieste di prenotazione"],["disp","Disponibilità"],["spot","Promuovi in evidenza"],["formazione","Formazione"]];
+  var nNew=S.reqs.filter(function(r){return r.st==="new";}).length;
+  app.innerHTML='<div class="wrap"><div class="crumbs"><a href="#/">Portale</a> / Area operatori</div><div class="op"><nav class="opnav" aria-label="Area operatori"><div class="who"><b>Cantina demo di Matelica</b>Operatore verificato</div>'+
+  tabs.map(function(t){return '<button data-op="'+t[0]+'" aria-current="'+(OP.tab===t[0])+'">'+t[1]+(t[0]==="richieste"&&nNew?' <span class="count" style="display:inline-grid;margin-left:6px">'+nNew+'</span>':'')+'</button>';}).join("")+
+  '<button data-op="logout" style="color:var(--muted)">Esci</button></nav><div id="opv"></div></div></div><div style="height:56px"></div>';
+  $$("[data-op]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-op");if(k==="logout"){OP.logged=false;OP.tab="home";pOperatori();return;}OP.tab=k;pOperatori();};});
+  var v=$("#opv");
+  var mine=ITEMS.filter(function(i){return i.own||i.id==="e5";});
+  if(OP.tab==="home"){
+    v.innerHTML='<div class="panel"><h2>Buongiorno</h2><p class="sub">Ecco come stanno andando le tue schede negli ultimi 30 giorni.</p><div class="kpis">'+
+    [["2.340","Visualizzazioni","+18%"],["146","Aggiunte ai preferiti","+9%"],["31","Richieste ricevute","+22%"],["4,8","Valutazione media",""]].map(function(k){return '<div class="kpi"><b>'+k[0]+'</b><span>'+k[1]+'</span> <em>'+k[2]+'</em></div>';}).join("")+'</div>'+
+    '<h3 style="font-size:16px">Da dove arrivano i tuoi visitatori</h3><div class="bars">'+[["Lombardia",82],["Lazio",64],["Emilia-Romagna",51],["Marche",45],["Germania",30]].map(function(b){return '<div class="bar"><span>'+b[0]+'</span><div><i style="width:'+b[1]+'%"></i></div><span>'+b[1]+'%</span></div>';}).join("")+'</div>'+
+    '<div class="dnote" style="margin-top:20px">Hai <b>'+nNew+' richieste</b> in attesa di risposta. <button class="btn sm" data-op2="richieste">Rispondi ora</button></div>'+mod("a","Dashboard analitica avanzata")+'</div>';
+  }
+  if(OP.tab==="schede"){
+    v.innerHTML='<div class="panel"><h2>Le mie schede</h2><p class="sub">Modifica testi, prezzi e foto: le modifiche vanno online dopo la verifica della redazione.</p><table class="tbl"><thead><tr><th>Scheda</th><th>Comune</th><th>Stato</th><th></th></tr></thead><tbody>'+
+    mine.map(function(i){return '<tr><td><b>'+esc(i.n)+'</b><br><span class="meta">'+esc(i.cat)+'</span></td><td>'+esc(i.c)+'</td><td><span class="st '+(i.own?"rev":"pub")+'">'+(i.own?"Pubblicata in demo":"Pubblicata")+'</span></td><td><a class="btn line sm" href="#/scheda/'+i.id+'">Vedi</a></td></tr>';}).join("")+
+    '</tbody></table><p style="margin-top:16px"><button class="btn tp" data-op2="nuova">Crea una nuova esperienza</button></p>'+mod("b","Area operatori self-service")+'</div>';
+  }
+  if(OP.tab==="nuova") wizard(v);
+  if(OP.tab==="richieste"){
+    v.innerHTML='<div class="panel"><h2>Richieste di prenotazione</h2><p class="sub">Conferma o rifiuta: il visitatore riceve la risposta in automatico.</p><table class="tbl"><thead><tr><th>Chi</th><th>Cosa e quando</th><th>Persone</th><th>Stato</th></tr></thead><tbody>'+
+    S.reqs.map(function(r){return '<tr><td><b>'+esc(r.who)+'</b></td><td>'+esc(r.what)+'<br><span class="meta">'+esc(r.when)+'</span></td><td>'+r.pers+'</td><td>'+(r.st==="new"?'<button class="btn green sm" data-rq="'+r.id+'" data-v="ok">Conferma</button> <button class="btn line sm" data-rq="'+r.id+'" data-v="no">Rifiuta</button>':'<span class="st '+(r.st==="ok"?"pub":"no")+'">'+(r.st==="ok"?"Confermata":"Rifiutata")+'</span>')+'</td></tr>';}).join("")+
+    '</tbody></table>'+mod("a","Motore prenotazioni con conferme automatiche")+'</div>';
+    $$("[data-rq]",v).forEach(function(b){b.onclick=function(){var r=S.reqs.find(function(x){return x.id===b.getAttribute("data-rq");});r.st=b.getAttribute("data-v");save();toast(r.st==="ok"?"Prenotazione confermata, email inviata al visitatore":"Richiesta rifiutata, il visitatore è stato avvisato");pOperatori();};});
+  }
+  if(OP.tab==="disp"){
+    var st=new Date(),g="";for(var k=0;k<21;k++){var x=new Date(st);x.setDate(st.getDate()+k);var off=(x.getDay()===1);g+='<button class="'+(off?"off":"")+'" aria-pressed="'+(!off)+'">'+x.toLocaleDateString("it-IT",{weekday:"short",day:"numeric"})+'</button>';}
+    v.innerHTML='<div class="panel"><h2>Disponibilità</h2><p class="sub">Tocca un giorno per aprirlo o chiuderlo alle prenotazioni. Il calendario del portale si aggiorna subito.</p><div class="avail" id="av">'+g+'</div><p class="meta" style="margin-top:12px">Verde: disponibile. Rosso: chiuso.</p>'+mod("a","Stay manager, calendari e tariffe")+'</div>';
+    $$("#av button").forEach(function(b){b.onclick=function(){b.classList.toggle("off");b.setAttribute("aria-pressed",String(!b.classList.contains("off")));};});
+  }
+  if(OP.tab==="spot"){
+    v.innerHTML='<div class="panel"><h2>Promuovi in evidenza</h2><p class="sub">Metti una tua esperienza nella fascia in evidenza della home per un periodo limitato.</p><div class="fgrid2" style="max-width:460px"><div><label class="f" for="spS">Scheda</label><select id="spS">'+mine.map(function(i){return '<option>'+esc(i.n)+'</option>';}).join("")+'</select></div><div><label class="f" for="spD">Durata</label><select id="spD"><option>7 giorni</option><option>14 giorni</option><option>30 giorni</option></select></div><button class="btn" id="spGo">Richiedi la promozione</button></div>'+mod("a","Spotlight")+'</div>';
+    $("#spGo").onclick=function(){toast("Richiesta inviata alla redazione di MaMa");};
+  }
+  if(OP.tab==="formazione"){
+    v.innerHTML='<div class="panel"><h2>Formazione</h2><p class="sub">Percorsi per crescere insieme: strumenti, tecnologie e marketing digitale.</p>'+
+    [["Antifragile, ridisegnare insieme il nuovo turismo","Percorso di co-progettazione, 3 video"],["Creare, comunicare e vendere un'esperienza di successo","Percorso di formazione, 8 video"],["Come usare l'Area operatori","Guida rapida, 4 minuti"]].map(function(x){return '<div class="video"><i aria-hidden="true">▶</i><div><b>'+x[0]+'</b><br><span class="meta">'+x[1]+'</span></div></div>';}).join("")+mod("a","Formazione, onboarding operatori")+'</div>';
+  }
+  $$("[data-op2]",v).forEach(function(b){b.onclick=function(){OP.tab=b.getAttribute("data-op2");pOperatori();};});
+}
+var STEPS=["Info","Luogo","Esperienza","Parlaci di te","Cosa è compreso"];
+function wizard(v){
+  var D=OP.draft,s=OP.step;
+  var body="";
+  if(s===0) body='<div><label class="f" for="wN">Titolo dell\'esperienza</label><input id="wN" value="'+esc(D.n)+'" placeholder="Ad esempio: Vendemmia in famiglia"></div><div><label class="f" for="wCat">Categoria</label><select id="wCat">'+["Made in MaMa","Arte e cultura","Sport e outdoor"].map(function(c){return '<option'+(D.cat===c?" selected":"")+'>'+c+'</option>';}).join("")+'</select></div>';
+  if(s===1) body='<div><label class="f" for="wC">Comune</label><select id="wC">'+COMUNI.map(function(c){return '<option'+(D.c===c?" selected":"")+'>'+esc(c)+'</option>';}).join("")+'</select></div><div><label class="f" for="wQ">Quando si svolge</label><input id="wQ" value="'+esc(D.q)+'"></div>';
+  if(s===2) body='<div><label class="f" for="wD">Cosa ti aspetta</label><textarea id="wD" rows="5" placeholder="Racconta l\'esperienza come la racconteresti a un ospite">'+esc(D.d)+'</textarea></div><div><label class="f" for="wP">Prezzo a persona (€)</label><input id="wP" type="number" min="0" value="'+D.p+'"></div>';
+  if(s===3) body='<div><label class="f" for="wH">Chi sei (nome dell\'host o dell\'azienda)</label><input id="wH" value="'+esc(D.host)+'"></div>';
+  if(s===4) body='<div><label class="f" for="wI">Cosa è compreso</label><textarea id="wI" rows="3" placeholder="Degustazione, attrezzatura, guida">'+esc(D.inc)+'</textarea></div><p class="meta">Le esperienze MaMa sono ideate e gestite da chi vive il territorio: non tour standard, ma occasioni autentiche di incontro.</p>';
+  var pv={id:"draft",t:"esperienza",n:D.n||"Titolo della tua esperienza",c:D.c,cat:D.cat,tema:["gusto"],p:+D.p||0,u:"a persona",q:D.q,d:D.d,pal:2,bk:1};
+  v.innerHTML='<div class="panel"><h2>Nuova esperienza</h2><p class="sub">Cinque passaggi, nessuna competenza tecnica. A destra vedi come apparirà sul portale.</p><div class="steps">'+STEPS.map(function(t,k){return '<span class="'+(k===s?"on":k<s?"done":"")+'">'+(k+1)+'. '+t+'</span>';}).join("")+'</div>'+
+  '<div class="wz"><div class="fgrid2" id="wf">'+body+'<div id="wMsg" aria-live="polite"></div><div style="display:flex;gap:8px">'+(s>0?'<button class="btn line" id="wB">Indietro</button>':'')+(s<4?'<button class="btn tp" id="wF">Avanti</button>':'<button class="btn green" id="wPub">Pubblica l\'esperienza</button>')+'</div></div>'+
+  '<div class="prev"><div class="pl">Anteprima sul portale</div><div id="wPrev">'+card(pv)+'</div></div></div>'+mod("b","Area operatori self-service")+'</div>';
+  function read(){var m={wN:"n",wCat:"cat",wC:"c",wQ:"q",wD:"d",wP:"p",wH:"host",wI:"inc"};for(var k in m){var e=document.getElementById(k);if(e)D[m[k]]=e.value;}}
+  $$("#wf input,#wf select,#wf textarea").forEach(function(e){e.oninput=e.onchange=function(){read();var p2=Object.assign({},pv,{n:D.n||"Titolo della tua esperienza",c:D.c,cat:D.cat,p:+D.p||0,q:D.q});$("#wPrev").innerHTML=card(p2);};});
+  if($("#wB"))$("#wB").onclick=function(){read();OP.step--;wizard(v);};
+  if($("#wF"))$("#wF").onclick=function(){read();if(s===0&&!D.n.trim()){$("#wMsg").innerHTML='<div class="err">Dai un titolo alla tua esperienza per continuare.</div>';return;}if(s===2&&D.d.trim().length<20){$("#wMsg").innerHTML='<div class="err">Scrivi almeno una frase che racconti cosa vivrà l\'ospite.</div>';return;}OP.step++;wizard(v);};
+  if($("#wPub"))$("#wPub").onclick=function(){read();var it={id:"u"+Date.now().toString(36),t:"esperienza",n:D.n,c:D.c,cat:D.cat,tema:["gusto"],p:+D.p||0,u:"a persona",q:D.q,host:D.host||"Operatore demo",d:D.d+(D.inc?" Compreso: "+D.inc+".":""),pal:2,bk:1,own:1};ITEMS.push(it);S.own.push(it);save();OP.step=0;OP.draft={n:"",c:"Matelica",cat:"Made in MaMa",p:25,q:"Tutto l'anno",d:"",host:"",inc:""};toast("Esperienza pubblicata sul portale");location.hash="#/scheda/"+it.id;};
+}
+
+/* ---------- Vista Ente ---------- */
+function pEnte(){
+  var perC=[["Macerata",100],["Recanati",78],["Civitanova Marche",71],["Camerino",46],["Fiastra",44],["Matelica",39],["Sarnano",33],["Treia",27],["Cingoli",25],["Visso",18]];
+  app.innerHTML='<div class="wrap"><div class="crumbs"><a href="#/">Portale</a> / Vista Ente e DMO</div><div class="panel" style="margin-bottom:20px"><h2>Cruscotto della destinazione</h2><p class="sub">Comune capofila e DMO leggono in un solo posto offerta, domanda e flussi. Dati illustrativi.</p><div class="kpis">'+
+  [["48.200","Visite al portale nel mese","+14%"],["1.230","Richieste agli operatori","+21%"],["312","Operatori attivi",""],["62%","Visite da fuori regione",""]].map(function(k){return '<div class="kpi"><b>'+k[0]+'</b><span>'+k[1]+'</span> <em>'+k[2]+'</em></div>';}).join("")+'</div>'+mod("a","Dashboard analitica avanzata")+'</div>'+
+  '<div class="detail" style="grid-template-columns:1fr 1fr"><div class="panel"><h2 style="font-size:18px">Interesse per Comune</h2><p class="sub">Visualizzazioni delle schede, indice su Macerata = 100.</p><div class="bars">'+perC.map(function(b){return '<div class="bar"><span>'+b[0]+'</span><div><i style="width:'+b[1]+'%;background:'+(b[1]<30?"#E97E00":"#2A93C9")+'"></i></div><span>'+b[1]+'</span></div>';}).join("")+'</div><div class="dnote">I Comuni in arancione sono poco visti: candidati per campagne Spotlight e itinerari dedicati, per bilanciare i flussi.</div></div>'+
+  '<div class="panel"><h2 style="font-size:18px">Cosa cercano i visitatori</h2><p class="sub">Ricerche e domande all\'assistente più frequenti.</p><table class="tbl"><tbody>'+[["Cosa fare con i bambini",412],["Lago di Fiastra",380],["Vincisgrassi dove mangiarli",295],["Macerata Opera Festival",274],["Agriturismi con piscina",198],["Sentieri Sibillini facili",176]].map(function(r){return '<tr><td>'+r[0]+'</td><td style="text-align:right"><b>'+r[1]+'</b></td></tr>';}).join("")+'</tbody></table>'+mod("a","AI ottimizzante")+'</div></div>'+
+  '<div class="panel" style="margin-top:20px"><h2 style="font-size:18px">Mappa dell\'offerta</h2><p class="sub">Tutte le schede pubblicate sul territorio.</p><div class="mapbox" style="position:static;max-width:760px">'+mapSvg(ITEMS)+'</div>'+mod("b","Hub API e interoperabilità, dati verso Tourism Digital Hub")+'</div></div><div style="height:56px"></div>';
+  bindPins(app);
+}
+
+/* ---------- Router ---------- */
+function route(){
+  var h=(location.hash||"#/").replace(/^#/,"").split("?")[0];
+  if(h.indexOf("viaggio=")>=0)h="/";
+  var p=h.split("/").filter(Boolean);
+  $$("nav.menu a").forEach(function(a){a.classList.toggle("on",a.getAttribute("href")==="#"+h);});
+  $("#menu").classList.remove("open");$("#burger").setAttribute("aria-expanded","false");
+  var cm=null;
+  if(!p.length){app.innerHTML=pHome();bindHome();}
+  else if(p[0]==="tema"&&TEMI[p[1]])pTema(p[1]);
+  else if(p[0]==="esperienze")listPage({title:"Esperienze uniche",lead:"Attività singole o proposte di più giorni, ideate da chi vive il territorio.",types:["esperienza"],pal:3,key:"exp",modTxt:"Filtri, wishlist e ricerca"});
+  else if(p[0]==="eventi")listPage({title:"Eventi da non perdere",lead:"Festival di richiamo internazionale e feste che tengono unite le comunità. Date indicative per la demo.",types:["evento"],pal:4,key:"ev"});
+  else if(p[0]==="dormire")listPage({title:"Dove dormire",lead:"Dagli hotel agli agriturismi, dai B&B ai rifugi: trova la soluzione adatta al tuo soggiorno.",types:["dormire"],pal:0,key:"dor",modTxt:"Cosa fare, dove dormire, mangiare"});
+  else if(p[0]==="mangiare")listPage({title:"Dove mangiare",lead:"Dai piatti di montagna dei Sibillini a quelli dell'Adriatico.",types:["mangiare"],pal:1,key:"man",modTxt:"Cosa fare, dove dormire, mangiare"});
+  else if(p[0]==="comune"){cm=decodeURIComponent(p[1]||"");listPage({title:cm,lead:"Tutto quello che trovi a "+cm+" sul portale di MaMa.",types:["esperienza","dormire","mangiare","evento","luogo","guida"],pal:2,key:"com"+cm,comune:cm});}
+  else if(p[0]==="gusto")pGusto();
+  else if(p[0]==="scheda")pScheda(p[1]);
+  else if(p[0]==="territorio")pTerritorio();
+  else if(p[0]==="servizi")pServizi();
+  else if(p[0]==="come-arrivare")pArrivare();
+  else if(p[0]==="api")pApi();
+  else if(p[0]==="operatori")pOperatori();
+  else if(p[0]==="ente")pEnte();
+  else app.innerHTML='<div class="wrap sec"><div class="empty">Pagina non trovata. <a href="#/">Torna alla home</a></div></div>';
+  window.scrollTo(0,0);
+  initPano();
+}
+function bindHome(){
+  var upd=function(){S.arr=$("#hsD").value||S.arr;S.nights=+$("#hsN").value;$("#wx").innerHTML=wx();};
+  $("#hsD").onchange=upd;$("#hsN").onchange=upd;
+  $("#hsGo").onclick=function(){var q=$("#hsQ").value.trim();location.hash="#/esperienze";if(q)setTimeout(function(){var f=$("#fQ");if(f){f.value=q;f.dispatchEvent(new Event("input"));}},30);};
+}
+setInterval(function(){var c=$("#cd");if(c)c.innerHTML=cd();},30000);
+
+function initPano(){
+  var pano=$("#pano");if(!pano)return;var svg=pano.querySelector("svg"),x=0,drag=null;
+  var max=function(){return svg.getBoundingClientRect().width-pano.clientWidth;};
+  var set=function(v){x=Math.min(0,Math.max(-max(),v));svg.style.transform="translateX("+x+"px)";};
+  set(-pano.clientWidth*.35);
+  pano.addEventListener("pointerdown",function(e){drag={s:e.clientX,x:x};pano.setPointerCapture(e.pointerId);pano.querySelector(".hint").style.display="none";});
+  pano.addEventListener("pointermove",function(e){if(drag)set(drag.x+(e.clientX-drag.s));});
+  pano.addEventListener("pointerup",function(){drag=null;});
+  pano.addEventListener("keydown",function(e){if(e.key==="ArrowLeft")set(x+60);if(e.key==="ArrowRight")set(x-60);});
+}
+
+/* ---------- Preferiti e viaggio ---------- */
+var ORD=["Macerata","Recanati","Montelupone","Potenza Picena","Appignano","Cingoli","Treia","Corridonia","Monte San Giusto","Tolentino","San Severino Marche","Castelraimondo","Matelica","Camerino","Sefro","Pioraco","Fiastra","Bolognola","Sarnano","Sant'Angelo in Pontano","Cessapalombo","Urbisaglia"];
+function toggleFav(id){var k=S.favs.indexOf(id),it=byId(id);if(k>=0){S.favs.splice(k,1);toast("Tolto dal tuo viaggio");}else{S.favs.push(id);toast("Aggiunto al tuo viaggio: "+it.n);}save();
+  $$('[data-fav="'+id+'"]').forEach(function(b){if(b.classList.contains("heart")){var on=S.favs.indexOf(id)>=0;b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",(on?"Togli dal":"Aggiungi al")+" mio viaggio: "+it.n);}else b.textContent=S.favs.indexOf(id)>=0?"Nel tuo viaggio":"Aggiungi al viaggio";});
+  renderTrip();}
+function plan(){var f=S.favs.map(byId).filter(Boolean),st=f.filter(function(i){return i.t==="dormire";}),rest=f.filter(function(i){return i.t!=="dormire";}).sort(function(a,b){return ORD.indexOf(a.c)-ORD.indexOf(b.c);}),n=S.nights+1,days=[];for(var k=0;k<n;k++)days.push([]);rest.forEach(function(it,ix){days[Math.min(n-1,Math.floor(ix*n/Math.max(rest.length,1)))].push(it);});return {f:f,st:st,days:days};}
+function renderTrip(){
+  var b=$("#tripBody"),P=plan(),tot=0;
+  if(!P.f.length){b.innerHTML='<div class="empty">Il tuo viaggio è vuoto. Tocca il cuore sulle schede per salvare esperienze, strutture, ristoranti ed eventi.</div>';$("#tripTot").textContent="0 €";return;}
+  var d=new Date(S.arr),h='<p class="meta" style="margin-top:0">Arrivo il '+d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+', '+S.nights+' notti, '+S.pers+' persone. Puoi cambiare le date nella home.</p>';
+  if(P.st.length){h+='<div class="day"><h3>Dove dormi</h3>';P.st.forEach(function(s){var c=s.p*S.nights;tot+=c;h+=stop(s,S.nights+" notti, "+euro(c));});h+='</div>';}
+  P.days.forEach(function(l,k){if(!l.length)return;var x=new Date(d);x.setDate(d.getDate()+k);h+='<div class="day"><h3>Giorno '+(k+1)+', '+x.toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+'</h3>';l.forEach(function(s){var c=(s.p||0)*(s.t==="evento"||s.t==="esperienza"||s.t==="mangiare"?S.pers:0);tot+=c;h+=stop(s,c?euro(c)+" per "+S.pers+" persone":"Senza costo indicato");});h+='</div>';});
+  b.innerHTML=h+'<div id="aiOut"></div>';$$("[data-rm]",b).forEach(function(x){x.onclick=function(){toggleFav(x.getAttribute("data-rm"));};});$("#tripTot").textContent=euro(tot);
+}
+function stop(s,sub){return '<div class="stop"><i style="background:'+CAT[s.t]+'"></i><div><b>'+esc(s.n)+'</b><small>'+esc(s.c)+', '+esc(sub)+'</small></div><button data-rm="'+s.id+'" aria-label="Togli '+esc(s.n)+'">×</button></div>';}
+function openTrip(){renderTrip();$("#drawer").classList.add("open");$("#drawer").setAttribute("aria-hidden","false");$("#scrim").classList.add("open");$("#closeTrip").focus();}
+function closeTrip(){$("#drawer").classList.remove("open");$("#drawer").setAttribute("aria-hidden","true");$("#scrim").classList.remove("open");$("#openTrip").focus();}
+function copy(t,msg){try{navigator.clipboard.writeText(t).then(function(){toast(msg);},function(){toast(t);});}catch(e){toast(t);}}
+
+/* ---------- Prenotazione simulata ---------- */
+function openBook(id){
+  var it=byId(id),b=$("#bookBody"),st=new Date(S.arr),cal="",seed=id.charCodeAt(id.length-1);
+  for(var k=0;k<14;k++){var x=new Date(st);x.setDate(st.getDate()+k);var busy=((x.getDate()+seed)%5===0);cal+='<button type="button" '+(busy?"disabled":"")+' data-d="'+x.toISOString().slice(0,10)+'" aria-pressed="false">'+x.getDate()+'<small>'+x.toLocaleDateString("it-IT",{weekday:"short"})+'</small></button>';}
+  var stay=it.t==="dormire";
+  $("#bTitle").textContent=stay?"Richiedi disponibilità":"Richiedi prenotazione";
+  b.innerHTML='<div><b style="font-size:17px">'+esc(it.n)+'</b><div class="meta">'+esc(it.c)+(priceTxt(it)?", "+esc(priceTxt(it)):"")+'</div></div>'+
+  '<div><label class="f">'+(stay?"Scegli la data di arrivo":"Scegli il giorno")+' (le date barrate sono al completo)</label><div class="cal" id="cal">'+cal+'</div></div>'+
+  '<div class="r2"><div><label class="f" for="bN">Nome</label><input id="bN" autocomplete="name"></div><div><label class="f" for="bP">Persone</label><select id="bP">'+[1,2,3,4,5,6].map(function(n){return '<option'+(n===S.pers?" selected":"")+'>'+n+'</option>';}).join("")+'</select></div></div>'+
+  '<div><label class="f" for="bE">Email</label><input id="bE" type="email" autocomplete="email"></div>'+
+  (it.p?'<div class="tot"><span>Totale indicativo</span><span id="bT"></span></div>':'')+
+  '<button class="btn green" id="bGo">Invia la richiesta</button>'+mod("a",stay?"Stay manager":"Motore prenotazioni")+mod("a","Gateway di pagamento, per il pagamento diretto")+'<div id="bMsg" aria-live="polite"></div>';
+  var sel=null,upd=function(){if($("#bT"))$("#bT").textContent=euro(it.p*(stay?S.nights:+$("#bP").value));};upd();$("#bP").onchange=upd;
+  $$("#cal button").forEach(function(x){x.onclick=function(){$$("#cal button").forEach(function(y){y.setAttribute("aria-pressed","false");});x.setAttribute("aria-pressed","true");sel=x.getAttribute("data-d");};});
+  $("#bGo").onclick=function(){var m=$("#bMsg");if(!sel){m.innerHTML='<div class="err">Scegli un giorno disponibile nel calendario.</div>';return;}if(!$("#bN").value.trim()||!/\S+@\S+\.\S+/.test($("#bE").value)){m.innerHTML='<div class="err">Inserisci nome ed email validi per ricevere la conferma.</div>';return;}
+    S.reqs.unshift({id:"q"+Date.now(),who:$("#bN").value.trim(),what:it.n,when:new Date(sel).toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}),pers:+$("#bP").value,st:"new"});save();
+    m.innerHTML='<div class="ok">Richiesta inviata. L\'operatore la trova subito nella sua Area operatori e ti risponde via email. In questa demo nessun dato esce dal tuo browser. <a href="#/operatori" id="bSee">Guardala dal lato operatore</a></div>';$("#bGo").disabled=true;$("#bSee").onclick=function(ev){ev.preventDefault();OP.logged=true;OP.tab="richieste";$("#book").close();if(location.hash==="#/operatori")route();else location.hash="#/operatori";};};
+  $("#book").showModal();
+}
+
+/* ---------- Assistente ---------- */
+var sampleFn=null,turns=[];
+var CATALOG=ITEMS.map(function(i){return i.n+" ("+LBL[i.t]+", "+i.c+(priceTxt(i)?", "+priceTxt(i):"")+"): "+i.d;}).join("\n");
+function addMsg(t,w){var m=document.createElement("div");m.className="msg "+w;m.textContent=t;$("#msgs").appendChild(m);$("#msgs").scrollTop=1e6;return m;}
+function local(q){q=q.toLowerCase();var hits=ITEMS.filter(function(i){var s=(i.n+" "+i.c+" "+i.d+" "+i.cat).toLowerCase();return q.split(/\W+/).some(function(w){return w.length>3&&s.indexOf(w)>=0;})||(/bambin|famigl/.test(q)&&/asin|escape|lago|yoga/.test(s))||(/piov/.test(q)&&/museo|tessitura|escape|mulino/.test(s))||(/vino|enogastr|mangi/.test(q)&&i.tema.indexOf("gusto")>=0);}).slice(0,4);
+  if(!hits.length)return "Posso aiutarti con esperienze, strutture, ristoranti ed eventi della Marca Maceratese. Prova a chiedermi cosa fare con i bambini, se piove o dove assaggiare i vincisgrassi.";
+  return "Ecco qualche idea:\n"+hits.map(function(i){return "• "+i.n+" a "+i.c+(priceTxt(i)?" ("+priceTxt(i)+")":"");}).join("\n")+"\nSalvale con il cuore e le trovi nel tuo viaggio.";}
+function prompt(q){return "Sei l'assistente turistico del portale MaMa, Marca Maceratese (Marche), realizzato con TouchPOI. Rispondi in italiano corretto, cordiale, massimo 90 parole, senza trattino lungo. Consiglia solo voci del catalogo qui sotto, senza inventare prezzi, orari o luoghi; se la domanda esce dal catalogo dillo con garbo e proponi l'alternativa più vicina.\nSoggiorno: arrivo "+S.arr+", "+S.nights+" notti, "+S.pers+" persone.\nCatalogo:\n"+CATALOG+"\n\nDomanda: "+q;}
+function ask(q){toggleChat(true);addMsg(q,"me");var m=addMsg("Sto pensando...","bot");if(!sampleFn){setTimeout(function(){m.textContent=local(q);},400);return;}
+  sampleFn(turns.slice(-6).concat([{role:"user",content:prompt(q)}]),{modelTier:"quick",cache:false,onText:function(e){m.textContent=e.text;}}).then(function(r){m.textContent=r.text;turns.push({role:"user",content:q},{role:"assistant",content:r.text});}).catch(function(e){if(e&&e.code==="not_granted")sampleFn=null;m.textContent=(e&&e.text)||local(q);});}
+function toggleChat(o){$("#chat").classList.toggle("open",o);$("#fab").setAttribute("aria-expanded",String(o));if(o)$("#cin").focus();}
+function aiTrip(){var P=plan(),out=$("#aiOut");if(!P.f.length){toast("Aggiungi prima qualcosa al tuo viaggio");return;}out.innerHTML='<div class="aibox">Sto preparando il programma...</div>';var box=out.firstChild;
+  var fb=function(){var t="Il programma consigliato:\n";P.days.forEach(function(l,k){if(l.length)t+="Giorno "+(k+1)+": "+l.map(function(i){return i.n+" ("+i.c+")";}).join(", poi ")+".\n";});t+="Consiglio: tieni le attività all'aperto al mattino e cena vicino a dove dormi.";box.textContent=t;};
+  if(!sampleFn){setTimeout(fb,500);return;}
+  sampleFn("Sei l'assistente turistico di MaMa, Marca Maceratese. In italiano corretto, senza trattino lungo, organizza un programma di "+(S.nights+1)+" giorni per "+S.pers+" persone con arrivo il "+S.arr+", usando SOLO queste voci salvate: "+P.f.map(function(i){return i.n+" ("+i.c+")";}).join("; ")+". Una riga per giorno, ordina per vicinanza geografica, massimo 120 parole, chiudi con un consiglio pratico.\nCatalogo:\n"+CATALOG,{modelTier:"quick",onText:function(e){box.textContent=e.text;}}).then(function(r){box.textContent=r.text;}).catch(function(e){if(e&&e.code==="not_granted")sampleFn=null;fb();});}
+
+/* ---------- Eventi globali ---------- */
+document.addEventListener("click",function(e){
+  var t=e.target.closest("[data-fav]");if(t){e.preventDefault();toggleFav(t.getAttribute("data-fav"));return;}
+  t=e.target.closest("[data-book]");if(t){e.preventDefault();openBook(t.getAttribute("data-book"));return;}
+  t=e.target.closest("[data-comune]");if(t){location.hash="#/comune/"+encodeURIComponent(t.getAttribute("data-comune"));return;}
+  t=e.target.closest("[data-ask]");if(t){ask(t.getAttribute("data-ask"));return;}
+  t=e.target.closest("[data-shop]");if(t){toast(t.getAttribute("data-shop")+": aggiunto al carrello (demo)");return;}
+  t=e.target.closest("[data-dl]");if(t){e.preventDefault();toast("Nel portale reale si scarica il PDF: "+t.getAttribute("data-dl"));return;}
+});
+$("#modToggle").onchange=function(e){document.body.classList.toggle("show-mod",e.target.checked);};
+$("#openTrip").onclick=openTrip;$("#closeTrip").onclick=closeTrip;$("#scrim").onclick=closeTrip;
+$("#closeBook").onclick=function(){$("#book").close();};
+$("#shareTrip").onclick=function(){if(!S.favs.length){toast("Aggiungi prima qualcosa al tuo viaggio");return;}copy(location.href.split("#")[0]+"#viaggio="+S.favs.join(","),"Link copiato, condividilo con chi viaggia con te");};
+$("#aiTrip").onclick=aiTrip;
+$("#fab").onclick=function(){toggleChat(!$("#chat").classList.contains("open"));};
+$("#closeChat").onclick=function(){toggleChat(false);};
+$("#burger").onclick=function(){var o=$("#menu").classList.toggle("open");$("#burger").setAttribute("aria-expanded",String(o));};
+$("#nlBtn").onclick=function(){toast(/\S+@\S+\.\S+/.test($("#nlMail").value)?"Iscrizione registrata (demo)":"Inserisci un'email valida");};
+$("#cform").onsubmit=function(e){e.preventDefault();var v=$("#cin").value.trim();if(v){ask(v);$("#cin").value="";}};
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){if($("#drawer").classList.contains("open"))closeTrip();if($("#chat").classList.contains("open"))toggleChat(false);}});
+addMsg("Ciao, sono l'assistente di MaMa. Dimmi con chi viaggi e cosa ti piace: ti preparo qualche idea su misura.","bot");
+["Cosa fare con i bambini?","Se piove cosa mi consigli?","Un weekend tra vino e borghi"].forEach(function(s){var b=document.createElement("button");b.type="button";b.textContent=s;b.onclick=function(){ask(s);};$("#sugg").appendChild(b);});
+window.addEventListener("hashchange",route);
+save();route();
+if(window.claude&&window.claude.use){window.claude.use("sample").then(function(s){if(s)sampleFn=s;}).catch(function(){});}
+})();
+</script>
+</body>
+</html>
